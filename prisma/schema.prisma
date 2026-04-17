@@ -1,0 +1,259 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  CEMETERY_ADMIN
+  SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  PAYMENT_RECEIVED
+  SERVICE_UPDATE
+  REMINDER
+  ACCOUNT_UPDATE
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  phoneNumber       String?
+  firstName         String
+  lastName          String
+  passwordHash      String
+  role              UserRole  @default(CUSTOMER)
+  cemeteryId        String?   @db.Uuid
+  cemetery          Cemetery? @relation("CemeteryAdmin", fields: [cemeteryId], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  bookings          Booking[]
+  deceasedProfiles  DeceasedProfile[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]      @relation("UserAuditLogs")
+
+  @@index([email])
+  @@index([cemeteryId])
+}
+
+model Cemetery {
+  id                String    @id @default(uuid()) @db.Uuid
+  name              String
+  location          String
+  latitude          Float
+  longitude         Float
+  description       String?
+  totalPlots        Int
+  availablePlots    Int
+  contactEmail      String
+  contactPhone      String
+  pricePerPlot      Float
+  imageUrl          String?
+  status            String    @default("active")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  admins            User[]    @relation("CemeteryAdmin")
+  plots             Plot[]
+  bookings          Booking[]
+  services          Service[]
+  auditLogs         AuditLog[]
+
+  @@index([name])
+  @@index([status])
+}
+
+model Plot {
+  id                String    @id @default(uuid()) @db.Uuid
+  cemeteryId        String    @db.Uuid
+  cemetery          Cemetery  @relation(fields: [cemeteryId], references: [id], onDelete: Cascade)
+  plotNumber        String
+  section           String
+  row               String
+  status            String    @default("available") // available, reserved, occupied
+  latitude          Float?
+  longitude         Float?
+  description       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  booking           Booking?
+  auditLogs         AuditLog[]
+
+  @@unique([cemeteryId, plotNumber])
+  @@index([cemeteryId])
+  @@index([status])
+}
+
+model Booking {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cemeteryId        String            @db.Uuid
+  cemetery          Cemetery          @relation(fields: [cemeteryId], references: [id])
+  plotId            String            @db.Uuid
+  plot              Plot              @relation(fields: [plotId], references: [id])
+  deceasedProfileId String?
+  deceasedProfile   DeceasedProfile?  @relation(fields: [deceasedProfileId], references: [id])
+  status            BookingStatus     @default(PENDING)
+  totalPrice        Float
+  notes             String?
+  bookingDate       DateTime          @default(now())
+  scheduledDate     DateTime?
+  completionDate    DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relations
+  payment           Payment?
+  serviceBookings   ServiceBooking[]
+  auditLogs         AuditLog[]
+
+  @@unique([plotId])
+  @@index([userId])
+  @@index([cemeteryId])
+  @@index([status])
+}
+
+model DeceasedProfile {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime?
+  dateOfDeath       DateTime
+  biography         String?
+  imageUrl          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  bookings          Booking[]
+  auditLogs         AuditLog[]
+
+  @@index([userId])
+}
+
+model Service {
+  id                String    @id @default(uuid()) @db.Uuid
+  cemeteryId        String    @db.Uuid
+  cemetery          Cemetery  @relation(fields: [cemeteryId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  price             Float
+  category          String    // transportation, ceremony, monument, maintenance, etc.
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  serviceBookings   ServiceBooking[]
+  auditLogs         AuditLog[]
+  
+
+  @@index([cemeteryId])
+  @@index([category])
+}
+
+model ServiceBooking {
+  id                String    @id @default(uuid())
+  bookingId         String
+  booking           Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId         String    @db.Uuid
+  service           Service   @relation(fields: [serviceId], references: [id])
+  quantity          Int       @default(1)
+  price             Float
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([bookingId, serviceId])
+  @@index([bookingId])
+}
+
+model Payment {
+  id                String            @id @default(uuid())
+  bookingId         String            @unique
+  booking           Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount            Float
+  status            PaymentStatus     @default(PENDING)
+  stripePaymentId   String?           @unique
+  stripeCustomerId  String?
+  paymentMethod     String?
+  paidAt            DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([bookingId])
+  @@index([status])
+}
+
+model Notification {
+  id                String             @id @default(uuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  title             String
+  message           String
+  read              Boolean            @default(false)
+  relatedBookingId  String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  @@index([userId])
+  @@index([read])
+}
+
+model AuditLog {
+  id                String    @id @default(uuid())
+  userId            String?
+  user              User?     @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+  entityType        String    // User, Booking, Payment, Plot, Cemetery, etc.
+  entityId          String
+  action            String    // CREATE, UPDATE, DELETE, VIEW
+  changes           Json?     // Store what changed
+  ipAddress         String?
+  createdAt         DateTime  @default(now())
+  
+  cemeteryId        String?   @db.Uuid
+  cemetery          Cemetery? @relation(fields: [cemeteryId], references: [id], onDelete: SetNull)
+  bookingId         String?
+  booking           Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  plotId            String?   @db.Uuid
+  plot              Plot?     @relation(fields: [plotId], references: [id], onDelete: SetNull)
+  deceasedProfileId String?
+  deceasedProfile   DeceasedProfile? @relation(fields: [deceasedProfileId], references: [id], onDelete: SetNull)
+  service           Service? @relation(fields: [serviceId], references: [id])
+  serviceId         String? @db.Uuid
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+}
