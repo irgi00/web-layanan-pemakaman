@@ -69,6 +69,22 @@ export async function POST(
       );
     }
 
+     // 🔥 Tambahin ini (biar tidak double bayar)
+    if (payment.status !== 'PENDING') {
+      return NextResponse.json(
+        { error: 'Payment already processed' },
+        { status: 400 }
+      );
+    }
+
+    // 🔥 Validasi request
+    if (!(body.status === 'completed' || body.success)) {
+      return NextResponse.json(
+        { error: 'Invalid payment status' },
+        { status: 400 }
+      );
+    }
+
     // Update payment status based on webhook or confirmation
     if (body.status === 'completed' || body.success) {
       const updatedPayment = await prisma.payment.update({

@@ -1,20 +1,22 @@
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
+import { SignJWT } from 'jose';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production';
 
-interface JWTPayload {
+interface JWTPayload extends jose.JWTPayload {
   userId: string;
   email: string;
   role: string;
 }
 
 export async function createToken(payload: JWTPayload): Promise<string> {
-  const secret = new TextEncoder().encode(JWT_SECRET);
-  return jose.SignJWT(payload)
+  const secret = new TextEncoder().encode(JWT_SECRET)
+
+  return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
-    .sign(secret);
+    .sign(secret)
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {

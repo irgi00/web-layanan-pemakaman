@@ -39,7 +39,7 @@ enum NotificationType {
 }
 
 model User {
-  id                String    @id @default(uuid())
+  id                String    @id @default(uuid()) @db.Uuid
   email             String    @unique
   phoneNumber       String?
   firstName         String
@@ -113,14 +113,14 @@ model Plot {
 }
 
 model Booking {
-  id                String            @id @default(uuid())
-  userId            String
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @db.Uuid
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   cemeteryId        String            @db.Uuid
   cemetery          Cemetery          @relation(fields: [cemeteryId], references: [id])
   plotId            String            @db.Uuid
   plot              Plot              @relation(fields: [plotId], references: [id])
-  deceasedProfileId String?
+  deceasedProfileId String?           @db.Uuid
   deceasedProfile   DeceasedProfile?  @relation(fields: [deceasedProfileId], references: [id])
   status            BookingStatus     @default(PENDING)
   totalPrice        Float
@@ -143,8 +143,8 @@ model Booking {
 }
 
 model DeceasedProfile {
-  id                String    @id @default(uuid())
-  userId            String
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName         String
   lastName          String
@@ -185,7 +185,7 @@ model Service {
 
 model ServiceBooking {
   id                String    @id @default(uuid())
-  bookingId         String
+  bookingId         String    @db.Uuid
   booking           Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   serviceId         String    @db.Uuid
   service           Service   @relation(fields: [serviceId], references: [id])
@@ -200,7 +200,7 @@ model ServiceBooking {
 
 model Payment {
   id                String            @id @default(uuid())
-  bookingId         String            @unique
+  bookingId         String            @unique @db.Uuid
   booking           Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   amount            Float
   status            PaymentStatus     @default(PENDING)
@@ -216,8 +216,8 @@ model Payment {
 }
 
 model Notification {
-  id                String             @id @default(uuid())
-  userId            String
+  id                String             @id @default(uuid()) @db.Uuid
+  userId            String             @db.Uuid
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   type              NotificationType
   title             String
@@ -232,8 +232,8 @@ model Notification {
 }
 
 model AuditLog {
-  id                String    @id @default(uuid())
-  userId            String?
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String?   @db.Uuid
   user              User?     @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
   entityType        String    // User, Booking, Payment, Plot, Cemetery, etc.
   entityId          String
@@ -244,11 +244,11 @@ model AuditLog {
   
   cemeteryId        String?   @db.Uuid
   cemetery          Cemetery? @relation(fields: [cemeteryId], references: [id], onDelete: SetNull)
-  bookingId         String?
+  bookingId         String?   @db.Uuid
   booking           Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   plotId            String?   @db.Uuid
   plot              Plot?     @relation(fields: [plotId], references: [id], onDelete: SetNull)
-  deceasedProfileId String?
+  deceasedProfileId String?   @db.Uuid
   deceasedProfile   DeceasedProfile? @relation(fields: [deceasedProfileId], references: [id], onDelete: SetNull)
   service           Service? @relation(fields: [serviceId], references: [id])
   serviceId         String? @db.Uuid
