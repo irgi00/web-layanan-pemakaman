@@ -1,36 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getSql } from '@/lib/neon';
 
 export async function GET(request: NextRequest) {
   try {
+    const sql = getSql();
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const cemeteries = await prisma.cemetery.findMany({
-      where: { status: 'active' },
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        latitude: true,
-        longitude: true,
-        description: true,
-        totalPlots: true,
-        availablePlots: true,
-        pricePerPlot: true,
-        imageUrl: true,
-        contactEmail: true,
-        contactPhone: true,
-      },
-    });
+    const cemeteries = await sql`
+      SELECT
+        id,
+        name,
+        location,
+        latitude,
+        longitude,
+        description,
+        "totalPlots",
+        "availablePlots",
+        "pricePerPlot",
+        "imageUrl",
+        "contactEmail",
+        "contactPhone"
+      FROM "Cemetery"
+      WHERE status = 'active'
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit}
+      OFFSET ${skip}
+    `;
 
-    const total = await prisma.cemetery.count({
-      where: { status: 'active' },
-    });
+    const totalResult = await sql`
+      SELECT COUNT(*)::int AS total
+      FROM "Cemetery"
+      WHERE status = 'active'
+    `;
+    const total = totalResult[0]?.total ?? 0;
 
     return NextResponse.json(
       {

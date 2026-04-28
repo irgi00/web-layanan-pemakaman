@@ -31,29 +31,56 @@ export default function CemeteriesPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCemeteries = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/cemeteries?page=${page}&limit=12`);
-        const data = await response.json();
-        setCemeteries(data.cemeteries);
-        setTotalPages(data.pagination.pages);
+        setError(null);
+
+        const res = await fetch(`/api/cemeteries?page=${page}&limit=12`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load cemeteries');
+        }
+
+        if (!isMounted) return;
+
+        const list = Array.isArray(data.cemeteries)
+          ? data.cemeteries
+          : Array.isArray(data.data)
+            ? data.data
+            : Array.isArray(data)
+              ? data
+              : [];
+
+        setCemeteries(list);
+        setTotalPages(data.pagination?.pages || data.pages || 1);
       } catch (err) {
-        setError('Failed to load cemeteries. Please try again.');
+        if (!isMounted) return;
+
         console.error(err);
+        setError(err instanceof Error ? err.message : 'Failed to load cemeteries');
+        setCemeteries([]);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCemeteries();
+
+    return () => {
+      isMounted = false;
+    };
   }, [page]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      {/* Hero Section */}
       <section className="bg-primary/10 py-12 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-4">
@@ -63,11 +90,17 @@ export default function CemeteriesPage() {
             <p className="text-lg text-muted-foreground max-w-2xl">
               Browse available cemetery plots and find the perfect final resting place.
             </p>
+            <div>
+              <Link href="/cemeteries/map">
+                <Button variant="outline" className="border-border text-foreground hover:bg-background">
+                  View on Map
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Content Section */}
       <section className="flex-1 py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {error && (
@@ -119,7 +152,7 @@ export default function CemeteriesPage() {
                         <h3 className="text-xl font-semibold text-foreground mb-2 text-balance">
                           {cemetery.name}
                         </h3>
-                        
+
                         {cemetery.description && (
                           <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
                             {cemetery.description}
@@ -155,13 +188,12 @@ export default function CemeteriesPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4 mt-12">
                   <Button
                     variant="outline"
                     disabled={page === 1}
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
                     className="border-border text-foreground hover:bg-muted"
                   >
                     Previous
@@ -174,7 +206,7 @@ export default function CemeteriesPage() {
                   <Button
                     variant="outline"
                     disabled={page === totalPages}
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
                     className="border-border text-foreground hover:bg-muted"
                   >
                     Next

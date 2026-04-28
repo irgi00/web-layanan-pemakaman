@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Verify plot is available
     const plot = await prisma.plot.findUnique({
       where: { id: data.plotId },
-      include: { booking: true },
+      include: { booking: true, cemetery: true },
     });
 
     if (!plot || plot.status !== 'available' || plot.booking) {
@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total price
-    let totalPrice = 500; // Base plot price
+    let totalPrice = plot.cemetery.pricePerPlot;
+    const serviceBookingItems: Array<{
+      serviceId: string;
+      quantity: number;
+      price: number;
+    }> = [];
 
     if (data.selectedServices && data.selectedServices.length > 0) {
       for (const selectedService of data.selectedServices) {
@@ -50,7 +55,7 @@ export async function POST(request: NextRequest) {
           where: { id: selectedService.serviceId },
         });
 
-        if (!service) {
+        if (!service || service.cemeteryId !== data.cemeteryId || !service.isActive) {
           return NextResponse.json(
             { error: `Service ${selectedService.serviceId} not found` },
             { status: 400 }
@@ -58,6 +63,11 @@ export async function POST(request: NextRequest) {
         }
 
         totalPrice += service.price * selectedService.quantity;
+        serviceBookingItems.push({
+          serviceId: service.id,
+          quantity: selectedService.quantity,
+          price: service.price,
+        });
       }
     }
 
@@ -72,10 +82,10 @@ export async function POST(request: NextRequest) {
         notes: data.notes,
         status: 'PENDING',
         serviceBookings: {
-          create: (data.selectedServices || []).map((service) => ({
+          create: serviceBookingItems.map((service) => ({
             serviceId: service.serviceId,
             quantity: service.quantity,
-            price: 0, // Will be filled in after fetching service details
+            price: service.price,
           })),
         },
       },
@@ -99,7 +109,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create payment record
-    await prisma.payment.create({
+    const payment = await prisma.payment.create({
       data: {
         bookingId: booking.id,
         amount: totalPrice,
@@ -114,6 +124,9 @@ export async function POST(request: NextRequest) {
           id: booking.id,
           totalPrice: booking.totalPrice,
           status: booking.status,
+        },
+        payment: {
+          id: payment.id,
         },
       },
       { status: 201 }

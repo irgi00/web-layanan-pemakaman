@@ -89,37 +89,37 @@ async function main() {
   console.log('Deceased profile created:', deceasedProfile.firstName, deceasedProfile.lastName);
 
   // Create sample services
-  const transportService = await prisma.service.create({
+  const regularService = await prisma.service.create({
     data: {
       cemeteryId: cemetery.id,
-      name: 'Casket Transportation',
-      description: 'Professional transportation service for the deceased',
+      name: 'Reguler',
+      description: 'Paket dasar untuk pemakaman dengan layanan standar yang tetap layak dan tertata.',
       price: 150,
-      category: 'transportation',
+      category: 'bundle',
     },
   });
 
-  const ceremonyService = await prisma.service.create({
+  const vipService = await prisma.service.create({
     data: {
       cemeteryId: cemetery.id,
-      name: 'Graveside Ceremony',
-      description: 'Professional graveside ceremony coordination',
+      name: 'VIP',
+      description: 'Paket menengah dengan fasilitas tambahan dan pendampingan prosesi yang lebih nyaman.',
       price: 300,
-      category: 'ceremony',
+      category: 'bundle',
     },
   });
 
-  const monumentService = await prisma.service.create({
+  const vvipService = await prisma.service.create({
     data: {
       cemeteryId: cemetery.id,
-      name: 'Monument Installation',
-      description: 'Installation of monument or headstone',
+      name: 'VVIP',
+      description: 'Paket premium dengan layanan prioritas, kenyamanan ekstra, dan penanganan prosesi yang lebih lengkap.',
       price: 800,
-      category: 'monument',
+      category: 'bundle',
     },
   });
 
-  console.log('Services created: Transportation, Ceremony, Monument');
+  console.log('Services created: Reguler, VIP, VVIP');
 
   console.log('Database seeding completed successfully!');
 }

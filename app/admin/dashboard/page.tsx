@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart3, LogOut, Plus, Settings } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,18 +25,28 @@ interface DashboardStats {
   totalRevenue: number;
 }
 
+interface ServicePreview {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  category: string;
+  isActive: boolean;
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [services, setServices] = useState<ServicePreview[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/admin/me');
         if (!response.ok) {
-          router.push('/login');
+          router.push('/admin/login');
           return;
         }
         const userData = await response.json();
@@ -50,9 +61,10 @@ export default function AdminDashboardPage() {
         
         // Fetch cemetery stats
         await fetchStats(userData);
+        await fetchServicesPreview();
       } catch (error) {
         console.error(error);
-        router.push('/login');
+        router.push('/admin/login');
       } finally {
         setLoading(false);
       }
@@ -67,6 +79,20 @@ export default function AdminDashboardPage() {
           totalBookings: 20,
           totalRevenue: 10000,
         });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const fetchServicesPreview = async () => {
+      try {
+        const response = await fetch('/api/admin/services');
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        setServices((data.services || []).slice(0, 4));
       } catch (error) {
         console.error(error);
       }
@@ -253,9 +279,11 @@ export default function AdminDashboardPage() {
                 <h2 className="text-2xl font-bold text-foreground mb-2">Services Management</h2>
                 <p className="text-muted-foreground">Configure available cemetery services</p>
               </div>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Service
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href="/admin/services">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Link>
               </Button>
             </div>
 
@@ -263,9 +291,12 @@ export default function AdminDashboardPage() {
               <div className="border-t border-border pt-4">
                 <h3 className="text-sm font-medium text-foreground mb-3">Quick Actions</h3>
                 <div className="space-y-2">
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
+                  <Link
+                    href="/admin/services"
+                    className="block w-full rounded px-4 py-2 text-left text-foreground transition-colors hover:bg-muted"
+                  >
                     View All Services
-                  </button>
+                  </Link>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
                     Update Pricing
                   </button>
@@ -276,6 +307,58 @@ export default function AdminDashboardPage() {
                     Enable/Disable Services
                   </button>
                 </div>
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-foreground">Service Preview</h3>
+                  <Link
+                    href="/admin/services"
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Kelola semua
+                  </Link>
+                </div>
+
+                {services.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-5 text-sm text-muted-foreground">
+                    Belum ada layanan yang ditampilkan. Tambahkan layanan baru untuk mulai mengelola service booking.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="rounded-lg border border-border bg-muted/20 px-4 py-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-medium text-foreground">{service.name}</h4>
+                              <Badge
+                                variant={service.isActive ? 'default' : 'secondary'}
+                                className={service.isActive ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
+                              >
+                                {service.isActive ? 'Aktif' : 'Nonaktif'}
+                              </Badge>
+                            </div>
+                            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                              {service.description || 'Tidak ada deskripsi'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-foreground">
+                              Rp {service.price.toLocaleString('id-ID')}
+                            </p>
+                            <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+                              {service.category}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </Card>
