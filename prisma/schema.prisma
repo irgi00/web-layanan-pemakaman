@@ -64,9 +64,16 @@ model User {
 model Cemetery {
   id                String    @id @default(uuid()) @db.Uuid
   name              String
-  location          String
-  latitude          Float
-  longitude         Float
+  location          String?
+  address           String?
+  country           String    @default("Indonesia")
+  island            String?
+  province          String?
+  city              String?
+  district          String?
+  postalCode        String?
+  latitude          Float?
+  longitude         Float?
   description       String?
   totalPlots        Int
   availablePlots    Int
@@ -87,6 +94,7 @@ model Cemetery {
 
   @@index([name])
   @@index([status])
+  @@index([country, province, city])
 }
 
 model Plot {
