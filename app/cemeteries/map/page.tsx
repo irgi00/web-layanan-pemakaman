@@ -75,7 +75,7 @@ export default function CemeteriesMapPage() {
         const firstData = await firstResponse.json();
 
         if (!firstResponse.ok) {
-          throw new Error(firstData.error || 'Failed to load cemetery locations');
+          throw new Error(firstData.error || 'Gagal memuat lokasi pemakaman');
         }
 
         let allCemeteries: CemeteryMapItem[] = firstData.cemeteries || [];
@@ -87,7 +87,7 @@ export default function CemeteriesMapPage() {
               const data = await response.json();
 
               if (!response.ok) {
-                throw new Error(data.error || 'Failed to load cemetery locations');
+                throw new Error(data.error || 'Gagal memuat lokasi pemakaman');
               }
 
               return data.cemeteries || [];
@@ -102,7 +102,7 @@ export default function CemeteriesMapPage() {
       } catch (error) {
         console.error(error);
         setDataError(
-          error instanceof Error ? error.message : 'Failed to load cemetery locations'
+          error instanceof Error ? error.message : 'Gagal memuat lokasi pemakaman'
         );
       } finally {
         setDataLoading(false);
@@ -342,7 +342,7 @@ export default function CemeteriesMapPage() {
                   Buka daftar TPU atau kembali ke halaman list standar.
                 </p>
               </div>
-              <Badge variant="outline">Map View</Badge>
+              <Badge variant="outline">Tampilan Peta</Badge>
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
@@ -356,7 +356,7 @@ export default function CemeteriesMapPage() {
           </Card>
 
           <Card className="border-border bg-card p-5">
-            <h2 className="font-semibold text-foreground">Best Practice</h2>
+            <h2 className="font-semibold text-foreground">Panduan Tampilan</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>Marker diambil dari API `/api/cemeteries` agar data tetap konsisten.</li>
               <li>Satu `InfoWindow` aktif pada satu waktu agar peta tidak terasa penuh.</li>

@@ -122,7 +122,7 @@ export default function AdminServicesPage() {
         await fetchServices();
       } catch (fetchError) {
         console.error(fetchError);
-        setError('Failed to load admin services');
+        setError('Gagal memuat layanan admin');
       } finally {
         setLoading(false);
       }
@@ -136,7 +136,7 @@ export default function AdminServicesPage() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to load services');
+      throw new Error(data.error || 'Gagal memuat layanan');
     }
 
     setServices(data.services || []);
@@ -173,14 +173,14 @@ export default function AdminServicesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete service');
+        throw new Error(data.error || 'Gagal menghapus layanan');
       }
 
       await fetchServices();
       setServiceToDelete(null);
     } catch (deleteError) {
       console.error(deleteError);
-      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete service');
+      setError(deleteError instanceof Error ? deleteError.message : 'Gagal menghapus layanan');
     } finally {
       setDeleting(false);
     }
@@ -191,12 +191,12 @@ export default function AdminServicesPage() {
     setFormError(null);
 
     if (!form.name.trim()) {
-      setFormError('Service name is required');
+      setFormError('Nama layanan wajib diisi');
       return;
     }
 
     if (!form.price || Number(form.price) < 0) {
-      setFormError('Price must be zero or greater');
+      setFormError('Harga harus bernilai nol atau lebih');
       return;
     }
 
@@ -225,7 +225,7 @@ export default function AdminServicesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save service');
+        throw new Error(data.error || 'Gagal menyimpan layanan');
       }
 
       await fetchServices();
@@ -234,7 +234,7 @@ export default function AdminServicesPage() {
       setForm(emptyForm);
     } catch (submitError) {
       console.error(submitError);
-      setFormError(submitError instanceof Error ? submitError.message : 'Failed to save service');
+      setFormError(submitError instanceof Error ? submitError.message : 'Gagal menyimpan layanan');
     } finally {
       setSaving(false);
     }
@@ -268,7 +268,7 @@ export default function AdminServicesPage() {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/90">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Admin Services
+                Layanan Admin
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Kelola Layanan Pemakaman</h1>
@@ -285,7 +285,7 @@ export default function AdminServicesPage() {
                 className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                 onClick={() => router.push('/admin/dashboard')}
               >
-                Back to Dashboard
+                Kembali ke Dasbor
               </Button>
               <Button
                 className="bg-white text-emerald-900 hover:bg-emerald-50"
@@ -526,7 +526,7 @@ export default function AdminServicesPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, category: event.target.value }))
                   }
-                  placeholder="Opsional, default ke general"
+                  placeholder="Opsional, default ke umum"
                 />
               </div>
 

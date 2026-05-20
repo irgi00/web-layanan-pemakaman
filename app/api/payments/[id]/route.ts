@@ -11,7 +11,7 @@ export async function GET(
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Anda belum masuk' },
         { status: 401 }
       );
     }
@@ -25,7 +25,7 @@ export async function GET(
 
     if (!payment || payment.booking.userId !== currentUser.userId) {
       return NextResponse.json(
-        { error: 'Payment not found' },
+        { error: 'Data pembayaran tidak ditemukan' },
         { status: 404 }
       );
     }
@@ -34,7 +34,7 @@ export async function GET(
   } catch (error) {
     console.error('Get payment error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }
@@ -49,7 +49,7 @@ export async function POST(
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Anda belum masuk' },
         { status: 401 }
       );
     }
@@ -64,7 +64,7 @@ export async function POST(
 
     if (!payment || payment.booking.userId !== currentUser.userId) {
       return NextResponse.json(
-        { error: 'Payment not found' },
+        { error: 'Data pembayaran tidak ditemukan' },
         { status: 404 }
       );
     }
@@ -72,7 +72,7 @@ export async function POST(
      // 🔥 Tambahin ini (biar tidak double bayar)
     if (payment.status !== 'PENDING') {
       return NextResponse.json(
-        { error: 'Payment already processed' },
+        { error: 'Pembayaran sudah diproses' },
         { status: 400 }
       );
     }
@@ -80,7 +80,7 @@ export async function POST(
     // 🔥 Validasi request
     if (!(body.status === 'completed' || body.success)) {
       return NextResponse.json(
-        { error: 'Invalid payment status' },
+        { error: 'Status pembayaran tidak valid' },
         { status: 400 }
       );
     }
@@ -104,7 +104,7 @@ export async function POST(
 
       return NextResponse.json(
         {
-          message: 'Payment completed successfully',
+          message: 'Pembayaran berhasil diselesaikan',
           payment: updatedPayment,
         },
         { status: 200 }
@@ -112,13 +112,13 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: 'Invalid payment status' },
+      { error: 'Status pembayaran tidak valid' },
       { status: 400 }
     );
   } catch (error) {
     console.error('Process payment error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

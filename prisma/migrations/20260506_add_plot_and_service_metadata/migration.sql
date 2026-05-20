@@ -1,0 +1,7 @@
+ALTER TABLE "Plot"
+ADD COLUMN "price" INTEGER,
+ADD COLUMN "size" TEXT;
+
+ALTER TABLE "Service"
+ADD COLUMN "duration" INTEGER,
+ADD COLUMN "status" TEXT;

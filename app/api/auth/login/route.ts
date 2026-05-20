@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword } from '@/lib/auth';
 import { createToken } from '@/lib/jwt';
+import { getRedirectPathByRole } from '@/lib/roles';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Email atau kata sandi tidak valid' },
         { status: 401 }
       );
     }
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (!passwordMatch) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Email atau kata sandi tidak valid' },
         { status: 401 }
       );
     }
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       {
-        message: 'Login successful',
+        message: 'Berhasil masuk',
+        redirectTo: getRedirectPathByRole(user.role),
         user: {
           id: user.id,
           email: user.email,
@@ -70,14 +72,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validasi gagal', details: error.errors },
         { status: 400 }
       );
     }
 
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

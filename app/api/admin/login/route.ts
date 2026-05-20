@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { comparePassword } from '@/lib/auth';
 import { createToken } from '@/lib/jwt';
 import { getSql } from '@/lib/neon';
+import { getRedirectPathByRole, isAdminRole } from '@/lib/roles';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -33,14 +34,14 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Email atau kata sandi tidak valid' },
         { status: 401 }
       );
     }
 
-    if (user.role !== 'CEMETERY_ADMIN' && user.role !== 'SUPER_ADMIN') {
+    if (!isAdminRole(user.role)) {
       return NextResponse.json(
-        { error: 'This account does not have admin access' },
+        { error: 'Akun ini tidak memiliki akses admin' },
         { status: 403 }
       );
     }
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     if (!passwordMatch) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Email atau kata sandi tidak valid' },
         { status: 401 }
       );
     }
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       {
-        message: 'Admin login successful',
+        message: 'Berhasil masuk sebagai admin',
+        redirectTo: getRedirectPathByRole(user.role),
         user: {
           id: user.id,
           email: user.email,
@@ -87,14 +89,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validasi gagal', details: error.errors },
         { status: 400 }
       );
     }
 
     console.error('Admin login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

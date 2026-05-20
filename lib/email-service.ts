@@ -7,7 +7,7 @@
  * - For now, logs emails to console
  */
 
-import { EmailData, getEmailTemplate } from './email-templates';
+import { EmailData, getEmailTemplate, NotificationTemplate } from './email-templates';
 
 interface SendEmailOptions {
   to: string;
@@ -83,7 +83,7 @@ export async function sendBookingConfirmation(
 ): Promise<boolean> {
   return sendNotificationEmail({
     to: email,
-    template: 'booking_confirmation',
+    template: NotificationTemplate.BOOKING_CONFIRMATION,
     data,
   });
 }
@@ -103,7 +103,7 @@ export async function sendPaymentConfirmation(
 ): Promise<boolean> {
   return sendNotificationEmail({
     to: email,
-    template: 'payment_received',
+    template: NotificationTemplate.PAYMENT_RECEIVED,
     data,
   });
 }
@@ -123,7 +123,7 @@ export async function sendServiceUpdate(
 ): Promise<boolean> {
   return sendNotificationEmail({
     to: email,
-    template: 'service_update',
+    template: NotificationTemplate.SERVICE_UPDATE,
     data,
   });
 }
@@ -143,7 +143,7 @@ export async function sendReminder(
 ): Promise<boolean> {
   return sendNotificationEmail({
     to: email,
-    template: 'reminder',
+    template: NotificationTemplate.REMINDER,
     data,
   });
 }

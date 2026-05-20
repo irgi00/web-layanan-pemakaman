@@ -9,6 +9,10 @@ interface EmailTemplate {
   html: string;
 }
 
+function formatRupiah(value: number) {
+  return `Rp${new Intl.NumberFormat('id-ID').format(value)}`
+}
+
 export enum NotificationTemplate {
   BOOKING_CONFIRMATION = 'booking_confirmation',
   PAYMENT_RECEIVED = 'payment_received',
@@ -28,15 +32,41 @@ export interface EmailData {
 export function getEmailTemplate(template: NotificationTemplate, data: Record<string, any>): EmailTemplate {
   switch (template) {
     case NotificationTemplate.BOOKING_CONFIRMATION:
-      return getBookingConfirmationTemplate(data);
+      return getBookingConfirmationTemplate(data as {
+        firstName: string;
+        lastName: string;
+        cemeteryName: string;
+        plotNumber: string;
+        bookingDate: string;
+        bookingId: string;
+        totalPrice: number;
+      });
     case NotificationTemplate.PAYMENT_RECEIVED:
-      return getPaymentReceivedTemplate(data);
+      return getPaymentReceivedTemplate(data as {
+        firstName: string;
+        lastName: string;
+        bookingId: string;
+        amount: number;
+        paymentDate: string;
+      });
     case NotificationTemplate.SERVICE_UPDATE:
-      return getServiceUpdateTemplate(data);
+      return getServiceUpdateTemplate(data as {
+        firstName: string;
+        lastName: string;
+        bookingId: string;
+        serviceName: string;
+        message: string;
+      });
     case NotificationTemplate.REMINDER:
-      return getReminderTemplate(data);
+      return getReminderTemplate(data as {
+        firstName: string;
+        lastName: string;
+        eventName: string;
+        eventDate: string;
+        reminder: string;
+      });
     default:
-      throw new Error('Unknown template');
+      throw new Error('Template tidak dikenal');
   }
 }
 
@@ -50,23 +80,23 @@ function getBookingConfirmationTemplate(data: {
   totalPrice: number;
 }): EmailTemplate {
   return {
-    subject: `Booking Confirmation - ${data.cemeteryName}`,
+    subject: `Konfirmasi Pemesanan - ${data.cemeteryName}`,
     body: `
-Dear ${data.firstName} ${data.lastName},
+Yth. ${data.firstName} ${data.lastName},
 
-Thank you for your booking with MemorialCare. Your reservation has been confirmed.
+Terima kasih telah melakukan pemesanan melalui MemorialCare. Reservasi Anda telah dikonfirmasi.
 
-Booking Details:
-- Cemetery: ${data.cemeteryName}
-- Plot: ${data.plotNumber}
-- Booking Date: ${data.bookingDate}
-- Booking ID: ${data.bookingId}
-- Total Price: $${data.totalPrice.toLocaleString()}
+Detail Pemesanan:
+- Pemakaman: ${data.cemeteryName}
+- Lahan: ${data.plotNumber}
+- Tanggal Pemesanan: ${data.bookingDate}
+- ID Pemesanan: ${data.bookingId}
+- Total Harga: ${formatRupiah(data.totalPrice)}
 
-Please proceed to complete your payment to finalize this booking.
+Silakan lanjutkan pembayaran untuk menyelesaikan pemesanan ini.
 
-Best regards,
-MemorialCare Team
+Hormat kami,
+Tim MemorialCare
     `,
     html: `
 <!DOCTYPE html>
@@ -84,20 +114,20 @@ MemorialCare Team
 <body>
   <div class="container">
     <div class="header">
-      <h2>Booking Confirmation</h2>
+      <h2>Konfirmasi Pemesanan</h2>
     </div>
-    <p>Dear ${data.firstName} ${data.lastName},</p>
-    <p>Thank you for your booking with MemorialCare. Your reservation has been confirmed.</p>
+    <p>Yth. ${data.firstName} ${data.lastName},</p>
+    <p>Terima kasih telah melakukan pemesanan melalui MemorialCare. Reservasi Anda telah dikonfirmasi.</p>
     <div class="details">
-      <p><strong>Cemetery:</strong> ${data.cemeteryName}</p>
-      <p><strong>Plot:</strong> ${data.plotNumber}</p>
-      <p><strong>Booking Date:</strong> ${data.bookingDate}</p>
-      <p><strong>Booking ID:</strong> ${data.bookingId}</p>
-      <p><strong>Total Price:</strong> $${data.totalPrice.toLocaleString()}</p>
+      <p><strong>Pemakaman:</strong> ${data.cemeteryName}</p>
+      <p><strong>Lahan:</strong> ${data.plotNumber}</p>
+      <p><strong>Tanggal Pemesanan:</strong> ${data.bookingDate}</p>
+      <p><strong>ID Pemesanan:</strong> ${data.bookingId}</p>
+      <p><strong>Total Harga:</strong> ${formatRupiah(data.totalPrice)}</p>
     </div>
-    <p>Please proceed to complete your payment to finalize this booking.</p>
+    <p>Silakan lanjutkan pembayaran untuk menyelesaikan pemesanan ini.</p>
     <div class="footer">
-      <p>&copy; 2024 MemorialCare. All rights reserved.</p>
+      <p>&copy; 2024 MemorialCare. Seluruh hak cipta dilindungi.</p>
     </div>
   </div>
 </body>
@@ -114,22 +144,22 @@ function getPaymentReceivedTemplate(data: {
   paymentDate: string;
 }): EmailTemplate {
   return {
-    subject: `Payment Receipt - Booking ${data.bookingId}`,
+    subject: `Bukti Pembayaran - Pemesanan ${data.bookingId}`,
     body: `
-Dear ${data.firstName} ${data.lastName},
+Yth. ${data.firstName} ${data.lastName},
 
-Your payment has been received successfully.
+Pembayaran Anda telah berhasil diterima.
 
-Payment Details:
-- Booking ID: ${data.bookingId}
-- Amount: $${data.amount.toLocaleString()}
-- Payment Date: ${data.paymentDate}
-- Status: Confirmed
+Detail Pembayaran:
+- ID Pemesanan: ${data.bookingId}
+- Jumlah: ${formatRupiah(data.amount)}
+- Tanggal Pembayaran: ${data.paymentDate}
+- Status: Terkonfirmasi
 
-Your booking is now complete. Thank you for choosing MemorialCare.
+Pemesanan Anda kini telah selesai. Terima kasih telah memilih MemorialCare.
 
-Best regards,
-MemorialCare Team
+Hormat kami,
+Tim MemorialCare
     `,
     html: `
 <!DOCTYPE html>
@@ -148,19 +178,19 @@ MemorialCare Team
 <body>
   <div class="container">
     <div class="header">
-      <h2>Payment Received</h2>
+      <h2>Pembayaran Diterima</h2>
     </div>
-    <p>Dear ${data.firstName} ${data.lastName},</p>
-    <p>Your payment has been received successfully.</p>
+    <p>Yth. ${data.firstName} ${data.lastName},</p>
+    <p>Pembayaran Anda telah berhasil diterima.</p>
     <div class="details">
-      <p><strong>Booking ID:</strong> ${data.bookingId}</p>
-      <p><strong>Amount:</strong> $${data.amount.toLocaleString()}</p>
-      <p><strong>Payment Date:</strong> ${data.paymentDate}</p>
-      <p><strong class="success">Status: Confirmed</strong></p>
+      <p><strong>ID Pemesanan:</strong> ${data.bookingId}</p>
+      <p><strong>Jumlah:</strong> ${formatRupiah(data.amount)}</p>
+      <p><strong>Tanggal Pembayaran:</strong> ${data.paymentDate}</p>
+      <p><strong class="success">Status: Terkonfirmasi</strong></p>
     </div>
-    <p>Your booking is now complete. Thank you for choosing MemorialCare.</p>
+    <p>Pemesanan Anda kini telah selesai. Terima kasih telah memilih MemorialCare.</p>
     <div class="footer">
-      <p>&copy; 2024 MemorialCare. All rights reserved.</p>
+      <p>&copy; 2024 MemorialCare. Seluruh hak cipta dilindungi.</p>
     </div>
   </div>
 </body>
@@ -177,19 +207,19 @@ function getServiceUpdateTemplate(data: {
   message: string;
 }): EmailTemplate {
   return {
-    subject: `Service Update - ${data.serviceName}`,
+    subject: `Pembaruan Layanan - ${data.serviceName}`,
     body: `
-Dear ${data.firstName} ${data.lastName},
+Yth. ${data.firstName} ${data.lastName},
 
-We have an update regarding your booking (${data.bookingId}).
+Kami memiliki pembaruan terkait pemesanan Anda (${data.bookingId}).
 
-Service: ${data.serviceName}
-Message: ${data.message}
+Layanan: ${data.serviceName}
+Pesan: ${data.message}
 
-If you have any questions, please don't hesitate to contact us.
+Jika ada pertanyaan, silakan hubungi kami kapan saja.
 
-Best regards,
-MemorialCare Team
+Hormat kami,
+Tim MemorialCare
     `,
     html: `
 <!DOCTYPE html>
@@ -206,17 +236,17 @@ MemorialCare Team
 <body>
   <div class="container">
     <div class="header">
-      <h2>Service Update</h2>
+      <h2>Pembaruan Layanan</h2>
     </div>
-    <p>Dear ${data.firstName} ${data.lastName},</p>
-    <p>We have an update regarding your booking (${data.bookingId}).</p>
+    <p>Yth. ${data.firstName} ${data.lastName},</p>
+    <p>Kami memiliki pembaruan terkait pemesanan Anda (${data.bookingId}).</p>
     <div class="message">
-      <p><strong>Service:</strong> ${data.serviceName}</p>
-      <p><strong>Message:</strong> ${data.message}</p>
+      <p><strong>Layanan:</strong> ${data.serviceName}</p>
+      <p><strong>Pesan:</strong> ${data.message}</p>
     </div>
-    <p>If you have any questions, please don't hesitate to contact us.</p>
+    <p>Jika ada pertanyaan, silakan hubungi kami kapan saja.</p>
     <div class="footer">
-      <p>&copy; 2024 MemorialCare. All rights reserved.</p>
+      <p>&copy; 2024 MemorialCare. Seluruh hak cipta dilindungi.</p>
     </div>
   </div>
 </body>
@@ -233,18 +263,18 @@ function getReminderTemplate(data: {
   reminder: string;
 }): EmailTemplate {
   return {
-    subject: `Reminder - ${data.eventName}`,
+    subject: `Pengingat - ${data.eventName}`,
     body: `
-Dear ${data.firstName} ${data.lastName},
+Yth. ${data.firstName} ${data.lastName},
 
-This is a gentle reminder about your upcoming event.
+Ini adalah pengingat untuk agenda Anda yang akan datang.
 
-Event: ${data.eventName}
-Date: ${data.eventDate}
-Reminder: ${data.reminder}
+Acara: ${data.eventName}
+Tanggal: ${data.eventDate}
+Pengingat: ${data.reminder}
 
-Best regards,
-MemorialCare Team
+Hormat kami,
+Tim MemorialCare
     `,
     html: `
 <!DOCTYPE html>
@@ -261,17 +291,17 @@ MemorialCare Team
 <body>
   <div class="container">
     <div class="header">
-      <h2>Reminder</h2>
+      <h2>Pengingat</h2>
     </div>
-    <p>Dear ${data.firstName} ${data.lastName},</p>
-    <p>This is a gentle reminder about your upcoming event.</p>
+    <p>Yth. ${data.firstName} ${data.lastName},</p>
+    <p>Ini adalah pengingat untuk agenda Anda yang akan datang.</p>
     <div class="reminder">
-      <p><strong>Event:</strong> ${data.eventName}</p>
-      <p><strong>Date:</strong> ${data.eventDate}</p>
-      <p><strong>Reminder:</strong> ${data.reminder}</p>
+      <p><strong>Acara:</strong> ${data.eventName}</p>
+      <p><strong>Tanggal:</strong> ${data.eventDate}</p>
+      <p><strong>Pengingat:</strong> ${data.reminder}</p>
     </div>
     <div class="footer">
-      <p>&copy; 2024 MemorialCare. All rights reserved.</p>
+      <p>&copy; 2024 MemorialCare. Seluruh hak cipta dilindungi.</p>
     </div>
   </div>
 </body>

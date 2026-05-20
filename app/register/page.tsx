@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Konfirmasi kata sandi tidak cocok');
       return;
     }
 
@@ -52,14 +53,14 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Registration failed');
+        setError(data.error || 'Pendaftaran gagal');
         return;
       }
 
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Terjadi kesalahan. Silakan coba lagi.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -69,15 +70,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-12">
       <div className="w-full max-w-md space-y-8">
+        <BackButton fallbackHref="/" />
         <div className="text-center space-y-4 mb-8">
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <Heart className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Join MemorialCare</h1>
+          <h1 className="text-3xl font-bold text-foreground">Bergabung dengan MemorialCare</h1>
           <p className="text-muted-foreground">
-            Create an account to start planning
+            Buat akun untuk mulai merencanakan
           </p>
         </div>
 
@@ -91,25 +93,25 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">First Name</label>
+                <label className="text-sm font-medium text-foreground">Nama Depan</label>
                 <Input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
-                  placeholder="John"
+                  placeholder="Budi"
                   required
                   className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Last Name</label>
+                <label className="text-sm font-medium text-foreground">Nama Belakang</label>
                 <Input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  placeholder="Doe"
+                  placeholder="Santoso"
                   required
                   className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
@@ -130,38 +132,38 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Phone Number</label>
+              <label className="text-sm font-medium text-foreground">Nomor Telepon</label>
               <Input
                 type="tel"
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleChange}
-                placeholder="+1-555-000-0000"
+                placeholder="+62-812-0000-0000"
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Password</label>
+              <label className="text-sm font-medium text-foreground">Kata Sandi</label>
               <Input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Minimum 8 characters"
+                placeholder="Minimal 8 karakter"
                 required
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Confirm Password</label>
+              <label className="text-sm font-medium text-foreground">Konfirmasi Kata Sandi</label>
               <Input
                 type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="Confirm your password"
+                placeholder="Ulangi kata sandi Anda"
                 required
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
@@ -172,14 +174,14 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Membuat akun...' : 'Buat Akun'}
             </Button>
           </form>
 
           <p className="text-center text-muted-foreground text-sm mt-6">
-            Already have an account?{' '}
+            Sudah punya akun?{' '}
             <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign In
+              Masuk
             </Link>
           </p>
         </Card>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Crown, Gem, Loader2, PackageCheck } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn, formatRupiah } from '@/lib/utils';
 
 interface Plot {
   id: string;
@@ -112,16 +113,22 @@ export default function CemeteryDetailPage({
           throw new Error(data.error || 'Gagal memuat data makam');
         }
 
-        const nextPlots = data.plots || [];
-        const nextBundles = (data.services || []).sort(
+        const nextPlots = Array.isArray(data.plots) ? data.plots : [];
+        const nextBundles = (
+          Array.isArray(data.services)
+            ? data.services
+            : Array.isArray(data.bundles)
+              ? data.bundles
+              : []
+        ).sort(
           (a: ServiceBundle, b: ServiceBundle) => a.price - b.price
         );
 
         setCemetery(data);
         setPlots(nextPlots);
         setBundles(nextBundles);
-        setSelectedPlot(nextPlots[0]?.id || null);
-        setSelectedBundle(nextBundles[0]?.id || null);
+        setSelectedPlot(null);
+        setSelectedBundle(null);
       } catch (fetchError) {
         console.error(fetchError);
         setError(
@@ -150,8 +157,11 @@ export default function CemeteryDetailPage({
   const totalPrice =
     (selectedPlotData?.price || 0) + (selectedBundleData?.price || 0);
 
+  const canContinue =
+    Boolean(selectedPlotData) && selectedPlotData?.status === 'available';
+
   const handleContinue = async () => {
-    if (!selectedPlotData || selectedPlotData.status !== 'available') return;
+    if (!canContinue || !selectedPlotData) return;
 
     setLoading(true);
 
@@ -214,8 +224,9 @@ export default function CemeteryDetailPage({
     <div className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-10">
         <div className="space-y-3">
+          <BackButton fallbackHref="/cemeteries" />
           <Badge variant="outline" className="rounded-full px-3 py-1">
-            Booking bundle
+            Paket pemesanan
           </Badge>
           <div>
             <h1 className="text-3xl font-bold text-foreground">
@@ -238,47 +249,67 @@ export default function CemeteryDetailPage({
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {plots.map((plot) => {
-              const isSelected = plot.id === selectedPlot;
-              const available = plot.status === 'available';
+            {plots.length === 0 ? (
+              <Card className="border-border bg-card p-6 md:col-span-2 xl:col-span-3">
+                <p className="text-sm text-muted-foreground">
+                  Belum ada lahan tersedia untuk pemakaman ini.
+                </p>
+              </Card>
+            ) : (
+              plots.map((plot) => {
+                const isSelected = plot.id === selectedPlot;
+                const available = plot.status === 'available';
 
-              return (
-                <Card
-                  key={plot.id}
-                  className={cn(
-                    'cursor-pointer border-border transition hover:shadow-lg',
-                    isSelected && 'border-primary bg-primary/10 ring-1 ring-primary/30',
-                    !available && 'pointer-events-none opacity-60'
-                  )}
-                  onClick={() => available && setSelectedPlot(plot.id)}
-                >
-                  <CardHeader>
-                    <CardTitle>
-                      {plot.section} - {plot.plotNumber}
-                    </CardTitle>
-                    <CardDescription>Status: {plot.status}</CardDescription>
-                  </CardHeader>
-
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {plot.description || 'Tidak ada deskripsi'}
-                    </p>
-
-                    {plot.price && (
-                      <p className="mt-3 text-lg font-semibold text-foreground">
-                        Rp {plot.price.toLocaleString('id-ID')}
-                      </p>
+                return (
+                  <Card
+                    key={plot.id}
+                    className={cn(
+                      'cursor-pointer border-border transition hover:shadow-lg',
+                      isSelected && 'border-primary bg-primary/10 ring-1 ring-primary/30',
+                      !available && 'pointer-events-none opacity-60'
                     )}
-                  </CardContent>
+                    onClick={() => available && setSelectedPlot(plot.id)}
+                  >
+                    <CardHeader>
+                      <CardTitle>
+                        {plot.section} - {plot.plotNumber}
+                      </CardTitle>
+                      <CardDescription>
+                        Status: {plot.status === 'available' ? 'Tersedia' : plot.status === 'reserved' ? 'Dipesan' : 'Terisi'}
+                      </CardDescription>
+                    </CardHeader>
 
-                  <CardFooter>
-                    <Button className="w-full" disabled={!available}>
-                      {isSelected ? 'Dipilih' : 'Pilih lahan'}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {plot.description || 'Tidak ada deskripsi'}
+                      </p>
+
+                      {plot.price && (
+                        <p className="mt-3 text-lg font-semibold text-foreground">
+                          {formatRupiah(plot.price)}
+                        </p>
+                      )}
+                    </CardContent>
+
+                    <CardFooter>
+                      <Button
+                        type="button"
+                        className="w-full"
+                        disabled={!available}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (available) {
+                            setSelectedPlot(plot.id);
+                          }
+                        }}
+                      >
+                        {isSelected ? 'Dipilih' : 'Pilih lahan'}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </section>
 
@@ -293,7 +324,7 @@ export default function CemeteryDetailPage({
           {bundles.length === 0 ? (
             <Card className="border-border bg-card p-6">
               <p className="text-sm text-muted-foreground">
-                Belum ada bundle layanan aktif untuk cemetery ini. Booking tetap bisa dilanjutkan hanya dengan lahan makam.
+                Belum ada paket layanan aktif untuk pemakaman ini. Pemesanan tetap bisa dilanjutkan hanya dengan lahan makam.
               </p>
             </Card>
           ) : (
@@ -311,7 +342,11 @@ export default function CemeteryDetailPage({
                       meta.cardClassName,
                       isSelected && 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-200'
                     )}
-                    onClick={() => setSelectedBundle(bundle.id)}
+                    onClick={() =>
+                      setSelectedBundle((current) =>
+                        current === bundle.id ? null : bundle.id
+                      )
+                    }
                   >
                     <CardHeader>
                       <div className="mb-4 flex items-center justify-between">
@@ -346,7 +381,7 @@ export default function CemeteryDetailPage({
                         </div>
                       </div>
                       <CardTitle>{bundle.name}</CardTitle>
-                      <CardDescription>{bundle.category || 'bundle'}</CardDescription>
+                      <CardDescription>{bundle.category || 'paket layanan'}</CardDescription>
                     </CardHeader>
 
                     <CardContent className="space-y-4">
@@ -356,15 +391,22 @@ export default function CemeteryDetailPage({
                       <div>
                         <p className="text-sm text-muted-foreground">Harga bundle</p>
                         <p className="text-2xl font-bold text-foreground">
-                          Rp {bundle.price.toLocaleString('id-ID')}
+                          {formatRupiah(bundle.price)}
                         </p>
                       </div>
                     </CardContent>
 
                     <CardFooter>
                       <Button
+                        type="button"
                         variant={isSelected ? 'default' : 'outline'}
                         className="w-full"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedBundle((current) =>
+                            current === bundle.id ? null : bundle.id
+                          );
+                        }}
                       >
                         {isSelected ? 'Bundle dipilih' : 'Pilih bundle'}
                       </Button>
@@ -393,7 +435,7 @@ export default function CemeteryDetailPage({
                     {selectedPlotData.section} - {selectedPlotData.plotNumber}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Rp {selectedPlotData.price?.toLocaleString('id-ID') || '0'}
+                    {formatRupiah(selectedPlotData.price || 0)}
                   </p>
                 </div>
 
@@ -403,7 +445,7 @@ export default function CemeteryDetailPage({
                     {selectedBundleData?.name || 'Tanpa bundle tambahan'}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Rp {selectedBundleData?.price.toLocaleString('id-ID') || '0'}
+                    {formatRupiah(selectedBundleData?.price || 0)}
                   </p>
                 </div>
               </div>
@@ -413,19 +455,20 @@ export default function CemeteryDetailPage({
                   <div>
                     <p className="text-sm text-muted-foreground">Total estimasi pembayaran</p>
                     <p className="mt-1 text-3xl font-bold text-foreground">
-                      Rp {totalPrice.toLocaleString('id-ID')}
+                      {formatRupiah(totalPrice)}
                     </p>
                   </div>
                   <Badge className="bg-primary hover:bg-primary">
-                    1 bundle dipilih
+                    {selectedBundleData ? '1 bundle dipilih' : 'Tanpa bundle'}
                   </Badge>
                 </div>
               </div>
 
               <Button
+                type="button"
                 className="w-full"
                 onClick={handleContinue}
-                disabled={loading || selectedPlotData.status !== 'available'}
+                disabled={loading || !canContinue}
               >
                 {loading ? (
                   <>

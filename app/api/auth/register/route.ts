@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Pengguna dengan email ini sudah terdaftar' },
         { status: 400 }
       );
     }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       {
-        message: 'User registered successfully',
+        message: 'Pendaftaran berhasil',
         user: {
           id: user.id,
           email: user.email,
@@ -76,14 +76,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validasi gagal', details: error.errors },
         { status: 400 }
       );
     }
 
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

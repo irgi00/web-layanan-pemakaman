@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Anda belum masuk' },
         { status: 401 }
       );
     }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!plot || plot.status !== 'available' || plot.booking) {
       return NextResponse.json(
-        { error: 'Plot is not available' },
+        { error: 'Lahan sudah tidak tersedia' },
         { status: 400 }
       );
     }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
         if (!service || service.cemeteryId !== data.cemeteryId || !service.isActive) {
           return NextResponse.json(
-            { error: `Service ${selectedService.serviceId} not found` },
+            { error: `Layanan ${selectedService.serviceId} tidak ditemukan` },
             { status: 400 }
           );
         }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Booking created successfully',
+        message: 'Pemesanan berhasil dibuat',
         booking: {
           id: booking.id,
           totalPrice: booking.totalPrice,
@@ -134,14 +134,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validasi gagal', details: error.errors },
         { status: 400 }
       );
     }
 
     console.error('Create booking error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

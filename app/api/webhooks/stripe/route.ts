@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendPaymentConfirmation, sendBookingConfirmation } from '@/lib/email-service';
+import { formatRupiah } from '@/lib/utils';
 
 /**
  * Stripe webhook handler
@@ -79,8 +80,8 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       data: {
         userId: payment.booking.userId,
         type: 'PAYMENT_RECEIVED',
-        title: 'Payment Confirmed',
-        message: `Your payment of $${payment.amount} has been received and confirmed.`,
+        title: 'Pembayaran Dikonfirmasi',
+        message: `Pembayaran Anda sebesar ${formatRupiah(payment.amount)} telah diterima dan dikonfirmasi.`,
         relatedBookingId: payment.bookingId,
       },
     });
@@ -123,8 +124,8 @@ async function handlePaymentFailed(paymentIntent: any) {
       data: {
         userId: payment.booking.userId,
         type: 'BOOKING_CONFIRMATION',
-        title: 'Payment Failed',
-        message: `Your payment of $${payment.amount} could not be processed. Please try again.`,
+        title: 'Pembayaran Gagal',
+        message: `Pembayaran Anda sebesar ${formatRupiah(payment.amount)} tidak dapat diproses. Silakan coba lagi.`,
         relatedBookingId: payment.bookingId,
       },
     });

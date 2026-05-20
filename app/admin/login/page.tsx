@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,14 +38,14 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Admin login failed');
+        setError(data.error || 'Masuk admin gagal');
         return;
       }
 
-      router.push('/admin/dashboard');
+      router.push(data.redirectTo || '/admin/dashboard');
     } catch (err) {
       console.error(err);
-      setError('An error occurred. Please try again.');
+      setError('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -53,15 +54,16 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-background to-emerald-50 px-4 py-12">
       <div className="w-full max-w-md space-y-8">
+        <BackButton fallbackHref="/login" />
         <div className="text-center space-y-4 mb-8">
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-emerald-700 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Admin Access</h1>
+          <h1 className="text-3xl font-bold text-foreground">Akses Admin</h1>
           <p className="text-muted-foreground">
-            Sign in with your cemetery administrator account
+            Masuk dengan akun administrator pemakaman Anda
           </p>
         </div>
 
@@ -74,7 +76,7 @@ export default function AdminLoginPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Admin Email</label>
+              <label className="text-sm font-medium text-foreground">Email Admin</label>
               <Input
                 type="email"
                 name="email"
@@ -87,13 +89,13 @@ export default function AdminLoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Password</label>
+              <label className="text-sm font-medium text-foreground">Kata Sandi</label>
               <Input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Your admin password"
+                placeholder="Masukkan kata sandi admin"
                 required
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
@@ -104,14 +106,14 @@ export default function AdminLoginPage() {
               disabled={loading}
               className="w-full bg-emerald-700 hover:bg-emerald-800 text-white"
             >
-              {loading ? 'Signing In...' : 'Sign In as Admin'}
+              {loading ? 'Sedang masuk...' : 'Masuk sebagai Admin'}
             </Button>
           </form>
 
           <p className="text-center text-muted-foreground text-sm mt-6">
-            Back to{' '}
+            Kembali ke{' '}
             <Link href="/login" className="text-primary hover:underline font-medium">
-              customer login
+              login pelanggan
             </Link>
           </p>
         </Card>

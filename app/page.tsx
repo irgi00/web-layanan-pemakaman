@@ -5,6 +5,7 @@ import { Heart, MapPin, Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/header';
+import { ReviewSection } from '@/components/review-section';
 
 export default function Home() {
   return (
@@ -18,22 +19,22 @@ export default function Home() {
             <div className="space-y-8">
               <div className="space-y-4">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground text-balance">
-                  Dignified Final Resting Places
+                  Tempat Peristirahatan Terakhir yang Layak dan Bermartabat
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground">
-                  MemorialCare makes planning and booking cemetery services simple, respectful, and compassionate. We honor memories with care.
+                  MemorialCare membantu proses perencanaan dan pemesanan layanan pemakaman menjadi lebih mudah, penuh hormat, dan terorganisir. Kami menjaga setiap kenangan dengan sepenuh hati.
                 </p>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/cemeteries">
                   <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Browse Cemeteries
+                    Jelajahi Pemakaman
                   </Button>
                 </Link>
                 <Link href="/register">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-foreground hover:bg-primary/10">
-                    Learn More
+                    Pelajari Lebih Lanjut
                   </Button>
                 </Link>
               </div>
@@ -41,15 +42,15 @@ export default function Home() {
               <div className="pt-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-foreground">100% Secure & Confidential</span>
+                  <span className="text-foreground">100% Aman dan Rahasia</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-foreground">Trusted by Thousands</span>
+                  <span className="text-foreground">Dipercaya Ribuan Keluarga</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-foreground">500+ Cemeteries Available</span>
+                  <span className="text-foreground">500+ Lokasi Pemakaman Tersedia</span>
                 </div>
               </div>
             </div>
@@ -58,7 +59,7 @@ export default function Home() {
               <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl h-96 flex items-center justify-center border border-primary/20">
                 <div className="text-center space-y-4">
                   <Heart className="w-24 h-24 text-primary mx-auto opacity-60" />
-                  <p className="text-muted-foreground">Compassionate Service</p>
+                  <p className="text-muted-foreground">Layanan Penuh Empati</p>
                 </div>
               </div>
             </div>
@@ -70,9 +71,9 @@ export default function Home() {
       <section className="py-20 md:py-32 bg-card border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Choose MemorialCare</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Mengapa Memilih MemorialCare</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              We provide a thoughtful, organized approach to end-of-life planning
+              Kami menghadirkan pendekatan yang tertata, tenang, dan penuh perhatian untuk perencanaan pemakaman
             </p>
           </div>
 
@@ -81,9 +82,9 @@ export default function Home() {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
                 <MapPin className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Easy Search & Discovery</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Pencarian yang Mudah</h3>
               <p className="text-muted-foreground">
-                Find cemetery plots in your area with detailed information, photos, and real-time availability.
+                Temukan lahan makam di area Anda dengan informasi lengkap, foto, dan ketersediaan secara real-time.
               </p>
             </Card>
 
@@ -91,9 +92,9 @@ export default function Home() {
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-6">
                 <Shield className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Secure Booking</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Pemesanan Aman</h3>
               <p className="text-muted-foreground">
-                Book plots and arrange services with peace of mind. All transactions are encrypted and confidential.
+                Pesan lahan dan atur layanan dengan tenang. Seluruh transaksi terenkripsi dan bersifat rahasia.
               </p>
             </Card>
 
@@ -101,27 +102,29 @@ export default function Home() {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
                 <Heart className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Comprehensive Services</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Layanan Lengkap</h3>
               <p className="text-muted-foreground">
-                From plot selection to monument installation, we offer a full range of memorial services.
+                Dari pemilihan lahan hingga pemasangan nisan, kami menyediakan rangkaian layanan memorial yang lengkap.
               </p>
             </Card>
           </div>
         </div>
       </section>
 
+      <ReviewSection />
+
       {/* CTA Section */}
       <section className="py-20 md:py-32 bg-primary">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground">
-            Ready to Honor Your Loved One?
+            Siap Memberikan Penghormatan Terbaik untuk Orang Terkasih?
           </h2>
           <p className="text-lg text-primary-foreground/90">
-            Start your search today. Browse available cemetery plots and arrange the perfect tribute.
+            Mulai pencarian hari ini. Telusuri lahan makam yang tersedia dan siapkan penghormatan yang layak.
           </p>
           <Link href="/cemeteries">
             <Button size="lg" className="bg-primary-foreground hover:bg-primary-foreground/90 text-primary">
-              Explore Cemeteries Now
+              Jelajahi Pemakaman Sekarang
             </Button>
           </Link>
         </div>
@@ -139,37 +142,37 @@ export default function Home() {
                 <span className="font-semibold text-foreground">MemorialCare</span>
               </div>
               <p className="text-muted-foreground text-sm">
-                Honoring memories with dignity and compassion.
+                Menghormati setiap kenangan dengan layak dan penuh empati.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
+              <h4 className="font-semibold text-foreground mb-4">Layanan</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/" className="hover:text-foreground transition">Home</Link></li>
-                <li><Link href="/cemeteries" className="hover:text-foreground transition">Cemeteries</Link></li>
-                <li><Link href="/about" className="hover:text-foreground transition">About</Link></li>
+                <li><Link href="/" className="hover:text-foreground transition">Beranda</Link></li>
+                <li><Link href="/cemeteries" className="hover:text-foreground transition">Pemakaman</Link></li>
+                <li><Link href="/about#services" className="hover:text-foreground transition">Layanan</Link></li>
+                <li><Link href="/about" className="hover:text-foreground transition">Tentang</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Support</h4>
+              <h4 className="font-semibold text-foreground mb-4">Bantuan</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/contact" className="hover:text-foreground transition">Contact</Link></li>
-                <li><Link href="/faq" className="hover:text-foreground transition">FAQ</Link></li>
-                <li><Link href="/privacy" className="hover:text-foreground transition">Privacy</Link></li>
+                <li><Link href="/about#faq" className="hover:text-foreground transition">Pertanyaan Umum</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition">Privasi</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-foreground mb-4">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/terms" className="hover:text-foreground transition">Terms</Link></li>
-                <li><Link href="/privacy" className="hover:text-foreground transition">Privacy Policy</Link></li>
-                <li><Link href="/cookies" className="hover:text-foreground transition">Cookies</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground transition">Syarat dan Ketentuan</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition">Kebijakan Privasi</Link></li>
+                <li><Link href="/cookies" className="hover:text-foreground transition">Cookie</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-border pt-8">
             <p className="text-sm text-muted-foreground text-center">
-              &copy; 2024 MemorialCare. All rights reserved.
+              &copy; 2024 MemorialCare. Seluruh hak cipta dilindungi.
             </p>
           </div>
         </div>

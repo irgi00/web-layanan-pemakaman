@@ -4,7 +4,7 @@ import { removeAuthToken } from '@/lib/jwt';
 export async function POST(request: NextRequest) {
   try {
     const response = NextResponse.json(
-      { message: 'Logout successful' },
+      { message: 'Berhasil keluar' },
       { status: 200 }
     );
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan pada server' },
       { status: 500 }
     );
   }

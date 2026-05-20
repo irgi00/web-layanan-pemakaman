@@ -1,34 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSql } from '@/lib/neon';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sql = getSql();
     const { id } = await params;
 
-    const cemeteryResult = await sql`
-      SELECT
-        id,
-        name,
-        location,
-        latitude,
-        longitude,
-        description,
-        "totalPlots",
-        "availablePlots",
-        "pricePerPlot",
-        "imageUrl",
-        "contactEmail",
-        "contactPhone",
-        status
-      FROM "Cemetery"
-      WHERE id = ${id}
-      LIMIT 1
-    `;
-    const cemetery = cemeteryResult[0];
+    const cemetery = await prisma.cemetery.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        location: true,
+        latitude: true,
+        longitude: true,
+        description: true,
+        totalPlots: true,
+        availablePlots: true,
+        pricePerPlot: true,
+        imageUrl: true,
+        contactEmail: true,
+        contactPhone: true,
+        status: true,
+        plots: {
+          orderBy: [
+            { section: 'asc' },
+            { row: 'asc' },
+            { plotNumber: 'asc' },
+          ],
+          select: {
+            id: true,
+            plotNumber: true,
+            section: true,
+            row: true,
+            latitude: true,
+            longitude: true,
+            status: true,
+            description: true,
+          },
+        },
+        services: {
+          where: { isActive: true },
+          orderBy: [{ price: 'asc' }, { name: 'asc' }],
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            price: true,
+            category: true,
+            isActive: true,
+          },
+        },
+      },
+    });
 
     if (!cemetery) {
       return NextResponse.json(
@@ -37,44 +63,21 @@ export async function GET(
       );
     }
 
-    const plots = await sql`
-      SELECT
-        id,
-        "plotNumber",
-        section,
-        "row",
-        latitude,
-        longitude,
-        status,
-        description,
-        ${cemetery.pricePerPlot}::double precision AS price
-      FROM "Plot"
-      WHERE "cemeteryId" = ${id}
-        AND status = 'available'
-      ORDER BY section ASC, "row" ASC, "plotNumber" ASC
-    `;
+    const plots = cemetery.plots
+      .filter((plot) => plot.status === 'available')
+      .map((plot) => ({
+        ...plot,
+        price: cemetery.pricePerPlot,
+      }));
 
-    const services = await sql`
-      SELECT
-        id,
-        name,
-        description,
-        price,
-        category,
-        "isActive"
-      FROM "Service"
-      WHERE "cemeteryId" = ${id}
-        AND "isActive" = true
-      ORDER BY price ASC, name ASC
-    `;
-
-    const payload = {
-      ...cemetery,
-      plots,
-      services,
-    };
-
-    return NextResponse.json(payload, { status: 200 });
+    return NextResponse.json(
+      {
+        ...cemetery,
+        plots,
+        services: cemetery.services,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Get cemetery error:', error);
     return NextResponse.json(

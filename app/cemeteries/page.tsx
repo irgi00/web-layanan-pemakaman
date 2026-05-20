@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MapPin, Users, DollarSign } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatRupiah } from '@/lib/utils';
 
 interface Cemetery {
   id: string;
@@ -42,7 +44,7 @@ export default function CemeteriesPage() {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to load cemeteries');
+          throw new Error(data.error || 'Gagal memuat data pemakaman');
         }
 
         if (!isMounted) return;
@@ -61,7 +63,7 @@ export default function CemeteriesPage() {
         if (!isMounted) return;
 
         console.error(err);
-        setError(err instanceof Error ? err.message : 'Failed to load cemeteries');
+        setError(err instanceof Error ? err.message : 'Gagal memuat data pemakaman');
         setCemeteries([]);
       } finally {
         if (isMounted) {
@@ -84,16 +86,17 @@ export default function CemeteriesPage() {
       <section className="bg-primary/10 py-12 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-4">
+            <BackButton fallbackHref="/" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              Find Your Peace
+              Temukan Tempat Peristirahatan yang Tepat
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl">
-              Browse available cemetery plots and find the perfect final resting place.
+              Telusuri lahan makam yang tersedia dan temukan pilihan terbaik untuk keluarga Anda.
             </p>
             <div>
               <Link href="/cemeteries/map">
                 <Button variant="outline" className="border-border text-foreground hover:bg-background">
-                  View on Map
+                  Lihat Peta
                 </Button>
               </Link>
             </div>
@@ -128,10 +131,10 @@ export default function CemeteriesPage() {
             </div>
           ) : cemeteries.length === 0 ? (
             <Card className="p-12 text-center bg-card border-border">
-              <p className="text-lg text-muted-foreground mb-6">No cemeteries found.</p>
+              <p className="text-lg text-muted-foreground mb-6">Belum ada data pemakaman yang ditemukan.</p>
               <Link href="/">
                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Return to Home
+                  Kembali ke Beranda
                 </Button>
               </Link>
             </Card>
@@ -164,7 +167,7 @@ export default function CemeteriesPage() {
                             <div className="flex items-center gap-2">
                               <Users className="w-4 h-4 text-primary" />
                               <span className="text-sm text-foreground font-medium">
-                                {cemetery.availablePlots} plots available
+                                {cemetery.availablePlots} lahan tersedia
                               </span>
                             </div>
                           </div>
@@ -173,13 +176,13 @@ export default function CemeteriesPage() {
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-accent" />
                               <span className="text-sm text-foreground font-medium">
-                                ${cemetery.pricePerPlot.toLocaleString()}
+                                {formatRupiah(cemetery.pricePerPlot)}
                               </span>
                             </div>
                           </div>
 
                           <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
-                            View Details
+                            Lihat Detail
                           </Button>
                         </div>
                       </div>
@@ -196,11 +199,11 @@ export default function CemeteriesPage() {
                     onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
                     className="border-border text-foreground hover:bg-muted"
                   >
-                    Previous
+                    Sebelumnya
                   </Button>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground font-medium">
-                      Page {page} of {totalPages}
+                      Halaman {page} dari {totalPages}
                     </span>
                   </div>
                   <Button
@@ -209,7 +212,7 @@ export default function CemeteriesPage() {
                     onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
                     className="border-border text-foreground hover:bg-muted"
                   >
-                    Next
+                    Berikutnya
                   </Button>
                 </div>
               )}

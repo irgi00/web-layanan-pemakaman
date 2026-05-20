@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/jwt';
 import { getSql } from '@/lib/neon';
+import { isAdminRole } from '@/lib/roles';
 
 export interface AdminActor {
   id: string;
@@ -8,10 +9,6 @@ export interface AdminActor {
   lastName: string;
   role: string;
   cemeteryId: string | null;
-}
-
-export function isAdminRole(role: string | null | undefined) {
-  return role === 'CEMETERY_ADMIN' || role === 'SUPER_ADMIN';
 }
 
 export async function getAdminActor(): Promise<AdminActor | null> {

@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'MemorialCare - Dignified Digital Burial Services',
-  description: 'Book cemetery plots and arrange final resting places with compassion and ease. MemorialCare makes end-of-life planning simple and respectful.',
+  title: 'MemorialCare - Layanan Pemakaman Digital yang Bermartabat',
+  description: 'Pesan lahan makam dan atur kebutuhan pemakaman dengan mudah, tertata, dan penuh empati bersama MemorialCare.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="id" className="bg-background">
       <body className="font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

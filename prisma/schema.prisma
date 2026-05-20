@@ -105,6 +105,8 @@ model Plot {
   section           String
   row               String
   status            String    @default("available") // available, reserved, occupied
+  price             Int?
+  size              String?
   latitude          Float?
   longitude         Float?
   description       String?
@@ -178,6 +180,8 @@ model Service {
   description       String?
   price             Float
   category          String    // transportation, ceremony, monument, maintenance, etc.
+  duration          Int?
+  status            String?
   isActive          Boolean   @default(true)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt

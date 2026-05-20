@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart3, LogOut, Plus, Settings } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatRupiah } from '@/lib/utils';
 
 interface User {
   id: string;
@@ -132,8 +134,8 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-              <p className="text-muted-foreground text-sm">Cemetery Management</p>
+              <h1 className="text-2xl font-bold text-foreground">Dasbor Admin</h1>
+              <p className="text-muted-foreground text-sm">Manajemen Pemakaman</p>
             </div>
             <Button
               onClick={handleLogout}
@@ -141,7 +143,7 @@ export default function AdminDashboardPage() {
               className="border-border text-foreground hover:bg-muted"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              Keluar
             </Button>
           </div>
         </div>
@@ -149,13 +151,14 @@ export default function AdminDashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <BackButton fallbackHref="/" className="mb-8" />
         {/* Quick Stats */}
         {stats && (
           <div className="grid md:grid-cols-4 gap-6 mb-12">
             <Card className="p-6 bg-card border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Plots</div>
+                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Lahan</div>
                   <div className="text-3xl font-bold text-foreground">{stats.totalPlots}</div>
                 </div>
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -167,7 +170,7 @@ export default function AdminDashboardPage() {
             <Card className="p-6 bg-card border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Available Plots</div>
+                  <div className="text-muted-foreground text-sm font-medium mb-2">Lahan Tersedia</div>
                   <div className="text-3xl font-bold text-accent">{stats.availablePlots}</div>
                 </div>
                 <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
@@ -179,7 +182,7 @@ export default function AdminDashboardPage() {
             <Card className="p-6 bg-card border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Bookings</div>
+                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Pemesanan</div>
                   <div className="text-3xl font-bold text-primary">{stats.totalBookings}</div>
                 </div>
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -191,8 +194,8 @@ export default function AdminDashboardPage() {
             <Card className="p-6 bg-card border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Revenue</div>
-                  <div className="text-3xl font-bold text-foreground">${(stats.totalRevenue / 1000).toFixed(1)}K</div>
+                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Pendapatan</div>
+                  <div className="text-3xl font-bold text-foreground">{formatRupiah(stats.totalRevenue)}</div>
                 </div>
                 <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                   <BarChart3 className="w-5 h-5 text-accent" />
@@ -208,30 +211,30 @@ export default function AdminDashboardPage() {
           <Card className="p-8 bg-card border-border">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Plot Management</h2>
-                <p className="text-muted-foreground">Manage cemetery plots and availability</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Lahan</h2>
+                <p className="text-muted-foreground">Kelola lahan pemakaman dan status ketersediaannya</p>
               </div>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Plot
+                Tambah Lahan
               </Button>
             </div>
 
             <div className="space-y-4">
               <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Quick Actions</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
                 <div className="space-y-2">
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    View All Plots
+                    Lihat Semua Lahan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Import Plots from CSV
+                    Impor Lahan dari CSV
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Update Plot Status
+                    Perbarui Status Lahan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Export Plot Report
+                    Ekspor Laporan Lahan
                   </button>
                 </div>
               </div>
@@ -242,30 +245,30 @@ export default function AdminDashboardPage() {
           <Card className="p-8 bg-card border-border">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Booking Management</h2>
-                <p className="text-muted-foreground">Review and manage customer bookings</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Pemesanan</h2>
+                <p className="text-muted-foreground">Tinjau dan kelola pemesanan pelanggan</p>
               </div>
               <Button variant="outline" className="border-border text-foreground hover:bg-muted">
                 <Settings className="w-4 h-4 mr-2" />
-                Settings
+                Pengaturan
               </Button>
             </div>
 
             <div className="space-y-4">
               <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Quick Actions</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
                 <div className="space-y-2">
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    View All Bookings
+                    Lihat Semua Pemesanan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Pending Confirmations
+                    Konfirmasi Tertunda
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Payment History
+                    Riwayat Pembayaran
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Generate Invoices
+                    Buat Invoice
                   </button>
                 </div>
               </div>
@@ -276,42 +279,42 @@ export default function AdminDashboardPage() {
           <Card className="p-8 bg-card border-border">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Services Management</h2>
-                <p className="text-muted-foreground">Configure available cemetery services</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Layanan</h2>
+                <p className="text-muted-foreground">Atur layanan pemakaman yang tersedia</p>
               </div>
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/admin/services">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Service
+                  Tambah Layanan
                 </Link>
               </Button>
             </div>
 
             <div className="space-y-4">
               <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Quick Actions</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
                 <div className="space-y-2">
                   <Link
                     href="/admin/services"
                     className="block w-full rounded px-4 py-2 text-left text-foreground transition-colors hover:bg-muted"
                   >
-                    View All Services
+                    Lihat Semua Layanan
                   </Link>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Update Pricing
+                    Perbarui Harga
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Service Analytics
+                    Analitik Layanan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Enable/Disable Services
+                    Aktifkan/Nonaktifkan Layanan
                   </button>
                 </div>
               </div>
 
               <div className="border-t border-border pt-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">Service Preview</h3>
+                  <h3 className="text-sm font-medium text-foreground">Pratinjau Layanan</h3>
                   <Link
                     href="/admin/services"
                     className="text-sm font-medium text-primary hover:underline"
@@ -322,7 +325,7 @@ export default function AdminDashboardPage() {
 
                 {services.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-5 text-sm text-muted-foreground">
-                    Belum ada layanan yang ditampilkan. Tambahkan layanan baru untuk mulai mengelola service booking.
+                    Belum ada layanan yang ditampilkan. Tambahkan layanan baru untuk mulai mengelola pemesanan layanan.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -367,30 +370,30 @@ export default function AdminDashboardPage() {
           <Card className="p-8 bg-card border-border">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Reports & Analytics</h2>
-                <p className="text-muted-foreground">View performance metrics and insights</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Laporan & Analitik</h2>
+                <p className="text-muted-foreground">Lihat metrik performa dan insight operasional</p>
               </div>
               <Button variant="outline" className="border-border text-foreground hover:bg-muted">
                 <BarChart3 className="w-4 h-4 mr-2" />
-                View
+                Lihat
               </Button>
             </div>
 
             <div className="space-y-4">
               <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Available Reports</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Laporan Tersedia</h3>
                 <div className="space-y-2">
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Revenue Report
+                    Laporan Pendapatan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Booking Trends
+                    Tren Pemesanan
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Occupancy Report
+                    Laporan Okupansi
                   </button>
                   <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Audit Log
+                    Log Audit
                   </button>
                 </div>
               </div>
@@ -400,31 +403,31 @@ export default function AdminDashboardPage() {
 
         {/* Settings Section */}
         <Card className="p-8 bg-card border-border mt-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Cemetery Settings</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">Pengaturan Pemakaman</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">General Information</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Informasi Umum</h3>
               <div className="space-y-3 text-foreground">
-                <p><span className="font-medium">Name:</span> Peaceful Rest Cemetery</p>
-                <p><span className="font-medium">Location:</span> Springfield, IL</p>
-                <p><span className="font-medium">Contact:</span> info@peacefulrest.com</p>
-                <p><span className="font-medium">Phone:</span> +1-217-555-0100</p>
+                <p><span className="font-medium">Nama:</span> Peaceful Rest Cemetery</p>
+                <p><span className="font-medium">Lokasi:</span> Springfield, IL</p>
+                <p><span className="font-medium">Kontak:</span> info@peacefulrest.com</p>
+                <p><span className="font-medium">Telepon:</span> +1-217-555-0100</p>
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">Administration</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Administrasi</h3>
               <div className="space-y-2">
                 <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Edit Cemetery Info
+                  Edit Info Pemakaman
                 </Button>
                 <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Manage Admins
+                  Kelola Admin
                 </Button>
                 <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  API Settings
+                  Pengaturan API
                 </Button>
                 <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Integrations
+                  Integrasi
                 </Button>
               </div>
             </div>

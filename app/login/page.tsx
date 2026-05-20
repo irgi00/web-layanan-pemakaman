@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,14 +38,13 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Masuk gagal');
         return;
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      router.push(data.redirectTo || '/dashboard');
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Terjadi kesalahan. Silakan coba lagi.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -54,15 +54,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-12">
       <div className="w-full max-w-md space-y-8">
+        <BackButton fallbackHref="/" />
         <div className="text-center space-y-4 mb-8">
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <Heart className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-foreground">Selamat Datang Kembali</h1>
           <p className="text-muted-foreground">
-            Sign in to manage your bookings
+            Masuk untuk mengelola pemesanan Anda
           </p>
         </div>
 
@@ -89,9 +90,9 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-foreground">Password</label>
+                <label className="text-sm font-medium text-foreground">Kata Sandi</label>
                 <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot?
+                  Lupa?
                 </Link>
               </div>
               <Input
@@ -99,7 +100,7 @@ export default function LoginPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Your password"
+                placeholder="Masukkan kata sandi"
                 required
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
@@ -110,14 +111,14 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? 'Sedang masuk...' : 'Masuk'}
             </Button>
           </form>
 
           <p className="text-center text-muted-foreground text-sm mt-6">
-            Don&apos;t have an account?{' '}
+            Belum punya akun?{' '}
             <Link href="/register" className="text-primary hover:underline font-medium">
-              Create one
+              Daftar sekarang
             </Link>
           </p>
         </Card>

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
+import { formatRupiah } from '@/lib/utils';
 
 export default function PaymentPage() {
   const { id } = useParams();
@@ -65,17 +67,19 @@ export default function PaymentPage() {
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
-      alert('Terjadi error');
+      alert('Terjadi kesalahan');
     }
   };
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  if (loading) return <p className="p-6">Memuat...</p>;
 
-  if (!payment) return <p className="p-6">Payment tidak ditemukan</p>;
+  if (!payment) return <p className="p-6">Data pembayaran tidak ditemukan</p>;
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-xl mx-auto border rounded-xl p-6 space-y-6">
+      <div className="max-w-xl mx-auto space-y-4">
+        <BackButton fallbackHref="/dashboard" />
+        <div className="border rounded-xl p-6 space-y-6">
         <h1 className="text-2xl font-bold">Pembayaran</h1>
 
         <div>
@@ -84,9 +88,9 @@ export default function PaymentPage() {
         </div>
 
         <div>
-          <p className="text-sm text-gray-500">Total Bayar</p>
+          <p className="text-sm text-gray-500">Total Pembayaran</p>
           <p className="text-xl font-bold">
-            Rp {payment.amount.toLocaleString('id-ID')}
+            {formatRupiah(payment.amount)}
           </p>
         </div>
 
@@ -99,7 +103,7 @@ export default function PaymentPage() {
                 : 'text-yellow-600'
             }`}
           >
-            {payment.status}
+            {payment.status === 'COMPLETED' ? 'Berhasil' : 'Menunggu'}
           </p>
         </div>
 
@@ -108,6 +112,7 @@ export default function PaymentPage() {
             Bayar Sekarang
           </Button>
         )}
+        </div>
       </div>
     </div>
   );
