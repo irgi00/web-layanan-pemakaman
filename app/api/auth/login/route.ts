@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword } from '@/lib/auth';
 import { createToken } from '@/lib/jwt';
-import { getRedirectPathByRole } from '@/lib/roles';
+import { getRedirectPathByRole, matchesLoginRoleOption } from '@/lib/roles';
 import { z } from 'zod';
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
+  loginAs: z.enum(['MEMBER', 'ADMIN']).default('MEMBER'),
 });
 
 export async function POST(request: NextRequest) {
@@ -34,6 +35,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Email atau kata sandi tidak valid' },
         { status: 401 }
+      );
+    }
+
+    if (!matchesLoginRoleOption(data.loginAs, user.role)) {
+      const expectedRoleLabel = data.loginAs === 'ADMIN' ? 'Admin' : 'Member';
+      return NextResponse.json(
+        { error: `Akun ini tidak terdaftar sebagai ${expectedRoleLabel}` },
+        { status: 403 }
       );
     }
 

@@ -19,3 +19,4 @@ node_modules
 tsconfig.tsbuildinfo
 tmp_api_error.html
 _tmp_*
+admin-accounts.md

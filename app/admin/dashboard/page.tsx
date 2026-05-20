@@ -2,105 +2,265 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { BarChart3, LogOut, Plus, Settings } from 'lucide-react';
+import { LogOut, Plus, Trash2 } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { formatRupiah } from '@/lib/utils';
 
-interface User {
+interface AdminUser {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: string;
-  cemeteryId?: string;
+  cemeteryId?: string | null;
 }
 
-interface DashboardStats {
-  totalPlots: number;
-  availablePlots: number;
-  totalBookings: number;
-  totalRevenue: number;
-}
-
-interface ServicePreview {
+interface CemeterySummary {
   id: string;
   name: string;
-  description: string | null;
-  price: number;
-  category: string;
-  isActive: boolean;
+  location: string | null;
+  city: string | null;
+  province: string | null;
+}
+
+interface OverviewResponse {
+  role: string;
+  cemetery: CemeterySummary | null;
+  stats: {
+    totalPlots: number;
+    availablePlots: number;
+    totalBookings: number;
+    totalRevenue: number;
+  };
+}
+
+interface PlotItem {
+  id: string;
+  plotNumber: string;
+  section: string;
+  row: string;
+  status: string;
+  cemeteryId: string;
+  price?: number | null;
+  cemetery?: {
+    name: string;
+    location: string | null;
+  };
+}
+
+interface BookingItem {
+  id: string;
+  totalPrice: number;
+  status: string;
+  createdAt: string;
+  user: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  plot: {
+    plotNumber: string;
+    section: string;
+    row: string;
+  };
+}
+
+const defaultPlotForm = {
+  plotNumber: '',
+  section: '',
+  row: '',
+  status: 'available',
+};
+
+function getOverviewEndpointByRole(role: string | null | undefined) {
+  return role === 'SUPER_ADMIN' ? '/api/superadmin/overview' : '/api/admin/overview';
+}
+
+async function readResponseBody(response: Response) {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    return rawText;
+  }
+}
+
+function getErrorMessageFromBody(body: unknown, fallbackMessage: string) {
+  if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
+    return body.error;
+  }
+
+  if (typeof body === 'string' && body.trim()) {
+    return body;
+  }
+
+  return fallbackMessage;
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [services, setServices] = useState<ServicePreview[]>([]);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [overview, setOverview] = useState<OverviewResponse | null>(null);
+  const [plots, setPlots] = useState<PlotItem[]>([]);
+  const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [plotForm, setPlotForm] = useState(defaultPlotForm);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDashboard = async (role: string) => {
+    const overviewEndpoint = getOverviewEndpointByRole(role);
+    const [overviewResponse, plotsResponse, bookingsResponse] = await Promise.all([
+      fetch(overviewEndpoint, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      }),
+      fetch('/api/admin/plots', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      }),
+      fetch('/api/admin/bookings', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      }),
+    ]);
+
+    const [overviewBody, plotsBody, bookingsBody] = await Promise.all([
+      readResponseBody(overviewResponse),
+      readResponseBody(plotsResponse),
+      readResponseBody(bookingsResponse),
+    ]);
+
+    const loadErrors: string[] = [];
+
+    if (!overviewResponse.ok) {
+      console.error('Admin dashboard overview request failed', {
+        endpoint: overviewEndpoint,
+        status: overviewResponse.status,
+        statusText: overviewResponse.statusText,
+        error: overviewBody,
+      });
+      loadErrors.push(
+        `Overview admin gagal dimuat (${overviewResponse.status}): ${getErrorMessageFromBody(
+          overviewBody,
+          'Terjadi kesalahan pada endpoint overview.'
+        )}`
+      );
+      setOverview(null);
+    } else {
+      console.log('Admin dashboard overview request succeeded', {
+        endpoint: overviewEndpoint,
+        status: overviewResponse.status,
+      });
+      setOverview(overviewBody as OverviewResponse);
+    }
+
+    if (!plotsResponse.ok) {
+      console.error('Admin dashboard plots request failed', {
+        endpoint: '/api/admin/plots',
+        status: plotsResponse.status,
+        statusText: plotsResponse.statusText,
+        error: plotsBody,
+      });
+      loadErrors.push(
+        `Data plot gagal dimuat (${plotsResponse.status}): ${getErrorMessageFromBody(
+          plotsBody,
+          'Terjadi kesalahan pada endpoint plot.'
+        )}`
+      );
+      setPlots([]);
+    } else {
+      setPlots(((plotsBody as { plots?: PlotItem[] } | null)?.plots || []) as PlotItem[]);
+    }
+
+    if (!bookingsResponse.ok) {
+      console.error('Admin dashboard bookings request failed', {
+        endpoint: '/api/admin/bookings',
+        status: bookingsResponse.status,
+        statusText: bookingsResponse.statusText,
+        error: bookingsBody,
+      });
+      loadErrors.push(
+        `Data booking gagal dimuat (${bookingsResponse.status}): ${getErrorMessageFromBody(
+          bookingsBody,
+          'Terjadi kesalahan pada endpoint booking.'
+        )}`
+      );
+      setBookings([]);
+    } else {
+      setBookings(
+        (((bookingsBody as { bookings?: BookingItem[] } | null)?.bookings || []) as BookingItem[])
+      );
+    }
+
+    if (loadErrors.length > 0) {
+      setError(loadErrors.join(' '));
+    } else {
+      setError(null);
+    }
+  };
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const bootstrap = async () => {
       try {
-        const response = await fetch('/api/admin/me');
-        if (!response.ok) {
+        const meResponse = await fetch('/api/admin/me', {
+          method: 'GET',
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+
+        if (!meResponse.ok) {
           router.push('/admin/login');
           return;
         }
-        const userData = await response.json();
-        
-        // Check if user is admin
-        if (userData.role !== 'CEMETERY_ADMIN' && userData.role !== 'SUPER_ADMIN') {
-          router.push('/dashboard');
+
+        const me = await meResponse.json();
+
+        if (me.role === 'SUPER_ADMIN') {
+          router.push('/superadmin/dashboard');
           return;
         }
 
-        setUser(userData);
-        
-        // Fetch cemetery stats
-        await fetchStats(userData);
-        await fetchServicesPreview();
-      } catch (error) {
-        console.error(error);
-        router.push('/admin/login');
+        if (me.role !== 'CEMETERY_ADMIN') {
+          router.push('/login');
+          return;
+        }
+
+        setUser(me);
+        await loadDashboard(me.role);
+      } catch (loadError) {
+        console.error('Admin dashboard bootstrap error', loadError);
+        setError('Terjadi kesalahan saat memuat dashboard.');
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchStats = async (userData: User) => {
-      try {
-        // In production, fetch real stats from API
-        setStats({
-          totalPlots: 500,
-          availablePlots: 480,
-          totalBookings: 20,
-          totalRevenue: 10000,
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    const fetchServicesPreview = async () => {
-      try {
-        const response = await fetch('/api/admin/services');
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-        setServices((data.services || []).slice(0, 4));
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchUser();
+    bootstrap();
   }, [router]);
 
   const handleLogout = async () => {
@@ -108,331 +268,322 @@ export default function AdminDashboardPage() {
     router.push('/');
   };
 
+  const handleCreatePlot = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+
+    if (!user?.role) {
+      setError('Role admin tidak ditemukan. Silakan login ulang.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const response = await fetch('/api/admin/plots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plotForm),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Gagal menambah plot');
+        return;
+      }
+
+      setPlotForm(defaultPlotForm);
+      await loadDashboard(user.role);
+    } catch (submitError) {
+      console.error(submitError);
+      setError('Terjadi kesalahan saat menambah plot.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePlotStatusChange = async (plotId: string, status: string) => {
+    if (!user?.role) {
+      setError('Role admin tidak ditemukan. Silakan login ulang.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/plots/${plotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Gagal memperbarui status plot');
+        return;
+      }
+
+      await loadDashboard(user.role);
+    } catch (updateError) {
+      console.error(updateError);
+      setError('Terjadi kesalahan saat memperbarui plot.');
+    }
+  };
+
+  const handleDeletePlot = async (plotId: string) => {
+    if (!user?.role) {
+      setError('Role admin tidak ditemukan. Silakan login ulang.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/plots/${plotId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Gagal menghapus plot');
+        return;
+      }
+
+      await loadDashboard(user.role);
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Terjadi kesalahan saat menghapus plot.');
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Skeleton className="h-32 w-full mb-8" />
-          <div className="grid md:grid-cols-4 gap-6 mb-12">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
+      <div className="min-h-screen bg-background px-4 py-12">
+        <div className="mx-auto max-w-7xl">
+          <Card className="p-8">Memuat dashboard admin...</Card>
         </div>
       </div>
     );
   }
 
-  if (!user || (user.role !== 'CEMETERY_ADMIN' && user.role !== 'SUPER_ADMIN')) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Dasbor Admin</h1>
-              <p className="text-muted-foreground text-sm">Manajemen Pemakaman</p>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="border-border text-foreground hover:bg-muted"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Keluar
-            </Button>
+      <header className="sticky top-0 border-b border-border bg-card">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard Cemetery Admin</h1>
+            <p className="text-sm text-muted-foreground">
+              Kelola data cemetery sesuai lokasi penugasan Anda
+            </p>
           </div>
+          <Button onClick={handleLogout} variant="outline">
+            <LogOut className="mr-2 h-4 w-4" />
+            Keluar
+          </Button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <BackButton fallbackHref="/" className="mb-8" />
-        {/* Quick Stats */}
-        {stats && (
-          <div className="grid md:grid-cols-4 gap-6 mb-12">
-            <Card className="p-6 bg-card border-border">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Lahan</div>
-                  <div className="text-3xl font-bold text-foreground">{stats.totalPlots}</div>
-                </div>
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            </Card>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <BackButton fallbackHref="/" className="mb-6" />
 
-            <Card className="p-6 bg-card border-border">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Lahan Tersedia</div>
-                  <div className="text-3xl font-bold text-accent">{stats.availablePlots}</div>
-                </div>
-                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-accent" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-card border-border">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Pemesanan</div>
-                  <div className="text-3xl font-bold text-primary">{stats.totalBookings}</div>
-                </div>
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-card border-border">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-muted-foreground text-sm font-medium mb-2">Total Pendapatan</div>
-                  <div className="text-3xl font-bold text-foreground">{formatRupiah(stats.totalRevenue)}</div>
-                </div>
-                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-accent" />
-                </div>
-              </div>
-            </Card>
-          </div>
+        {error && (
+          <Card className="mb-6 border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </Card>
         )}
 
-        {/* Management Sections */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Plot Management */}
-          <Card className="p-8 bg-card border-border">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Lahan</h2>
-                <p className="text-muted-foreground">Kelola lahan pemakaman dan status ketersediaannya</p>
-              </div>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="w-4 h-4 mr-2" />
-                Tambah Lahan
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
-                <div className="space-y-2">
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Lihat Semua Lahan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Impor Lahan dari CSV
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Perbarui Status Lahan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Ekspor Laporan Lahan
-                  </button>
-                </div>
-              </div>
-            </div>
+        <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Plot Tersedia</p>
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {overview?.stats.availablePlots ?? 0}
+            </p>
           </Card>
-
-          {/* Booking Management */}
-          <Card className="p-8 bg-card border-border">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Pemesanan</h2>
-                <p className="text-muted-foreground">Tinjau dan kelola pemesanan pelanggan</p>
-              </div>
-              <Button variant="outline" className="border-border text-foreground hover:bg-muted">
-                <Settings className="w-4 h-4 mr-2" />
-                Pengaturan
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
-                <div className="space-y-2">
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Lihat Semua Pemesanan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Konfirmasi Tertunda
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Riwayat Pembayaran
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Buat Invoice
-                  </button>
-                </div>
-              </div>
-            </div>
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Total Plot</p>
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {overview?.stats.totalPlots ?? 0}
+            </p>
           </Card>
-
-          {/* Services Management */}
-          <Card className="p-8 bg-card border-border">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Manajemen Layanan</h2>
-                <p className="text-muted-foreground">Atur layanan pemakaman yang tersedia</p>
-              </div>
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/admin/services">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Tambah Layanan
-                </Link>
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Aksi Cepat</h3>
-                <div className="space-y-2">
-                  <Link
-                    href="/admin/services"
-                    className="block w-full rounded px-4 py-2 text-left text-foreground transition-colors hover:bg-muted"
-                  >
-                    Lihat Semua Layanan
-                  </Link>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Perbarui Harga
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Analitik Layanan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Aktifkan/Nonaktifkan Layanan
-                  </button>
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">Pratinjau Layanan</h3>
-                  <Link
-                    href="/admin/services"
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    Kelola semua
-                  </Link>
-                </div>
-
-                {services.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-5 text-sm text-muted-foreground">
-                    Belum ada layanan yang ditampilkan. Tambahkan layanan baru untuk mulai mengelola pemesanan layanan.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {services.map((service) => (
-                      <div
-                        key={service.id}
-                        className="rounded-lg border border-border bg-muted/20 px-4 py-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h4 className="font-medium text-foreground">{service.name}</h4>
-                              <Badge
-                                variant={service.isActive ? 'default' : 'secondary'}
-                                className={service.isActive ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
-                              >
-                                {service.isActive ? 'Aktif' : 'Nonaktif'}
-                              </Badge>
-                            </div>
-                            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                              {service.description || 'Tidak ada deskripsi'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-foreground">
-                              Rp {service.price.toLocaleString('id-ID')}
-                            </p>
-                            <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
-                              {service.category}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Jumlah Booking</p>
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {overview?.stats.totalBookings ?? 0}
+            </p>
           </Card>
-
-          {/* Reports & Analytics */}
-          <Card className="p-8 bg-card border-border">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Laporan & Analitik</h2>
-                <p className="text-muted-foreground">Lihat metrik performa dan insight operasional</p>
-              </div>
-              <Button variant="outline" className="border-border text-foreground hover:bg-muted">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Lihat
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Laporan Tersedia</h3>
-                <div className="space-y-2">
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Laporan Pendapatan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Tren Pemesanan
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Laporan Okupansi
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-foreground hover:bg-muted rounded transition-colors">
-                    Log Audit
-                  </button>
-                </div>
-              </div>
-            </div>
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Pendapatan Lokasi</p>
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {formatRupiah(overview?.stats.totalRevenue ?? 0)}
+            </p>
           </Card>
         </div>
 
-        {/* Settings Section */}
-        <Card className="p-8 bg-card border-border mt-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Pengaturan Pemakaman</h2>
-          <div className="grid md:grid-cols-2 gap-8">
+        <Card className="mb-8 p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">Informasi Umum</h3>
-              <div className="space-y-3 text-foreground">
-                <p><span className="font-medium">Nama:</span> Peaceful Rest Cemetery</p>
-                <p><span className="font-medium">Lokasi:</span> Springfield, IL</p>
-                <p><span className="font-medium">Kontak:</span> info@peacefulrest.com</p>
-                <p><span className="font-medium">Telepon:</span> +1-217-555-0100</p>
-              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {overview?.cemetery?.name || 'Cemetery belum ditugaskan'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {overview?.cemetery?.location ||
+                  [overview?.cemetery?.city, overview?.cemetery?.province]
+                    .filter(Boolean)
+                    .join(', ') ||
+                  'Tidak ada lokasi tersedia'}
+              </p>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">Administrasi</h3>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Edit Info Pemakaman
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Kelola Admin
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Pengaturan API
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-border text-foreground hover:bg-muted">
-                  Integrasi
-                </Button>
-              </div>
-            </div>
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+              {user?.email}
+            </Badge>
           </div>
         </Card>
+
+        <div className="grid gap-8 xl:grid-cols-[1.1fr,0.9fr]">
+          <Card className="p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Manage Plot</h2>
+                <p className="text-sm text-muted-foreground">
+                  Tambah, ubah status, dan hapus plot pada cemetery Anda
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreatePlot} className="mb-6 grid gap-3 md:grid-cols-2">
+              <Input
+                placeholder="Nomor plot"
+                value={plotForm.plotNumber}
+                onChange={(event) =>
+                  setPlotForm((prev) => ({ ...prev, plotNumber: event.target.value }))
+                }
+                required
+              />
+              <Input
+                placeholder="Section"
+                value={plotForm.section}
+                onChange={(event) =>
+                  setPlotForm((prev) => ({ ...prev, section: event.target.value }))
+                }
+                required
+              />
+              <Input
+                placeholder="Row"
+                value={plotForm.row}
+                onChange={(event) =>
+                  setPlotForm((prev) => ({ ...prev, row: event.target.value }))
+                }
+                required
+              />
+              <select
+                value={plotForm.status}
+                onChange={(event) =>
+                  setPlotForm((prev) => ({ ...prev, status: event.target.value }))
+                }
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+              >
+                <option value="available">available</option>
+                <option value="booked">booked</option>
+              </select>
+              <div className="md:col-span-2">
+                <Button type="submit" disabled={submitting} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {submitting ? 'Menyimpan...' : 'Tambah Plot'}
+                </Button>
+              </div>
+            </form>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plot</TableHead>
+                  <TableHead>Section</TableHead>
+                  <TableHead>Row</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {plots.map((plot) => (
+                  <TableRow key={plot.id}>
+                    <TableCell className="font-medium">{plot.plotNumber}</TableCell>
+                    <TableCell>{plot.section}</TableCell>
+                    <TableCell>{plot.row}</TableCell>
+                    <TableCell>
+                      <select
+                        value={plot.status}
+                        onChange={(event) =>
+                          handlePlotStatusChange(plot.id, event.target.value)
+                        }
+                        className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                      >
+                        <option value="available">available</option>
+                        <option value="booked">booked</option>
+                        <option value="reserved">reserved</option>
+                        <option value="occupied">occupied</option>
+                      </select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeletePlot(plot.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {plots.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
+                      Belum ada plot untuk cemetery ini.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Booking List</h2>
+              <p className="text-sm text-muted-foreground">
+                Daftar booking yang terjadi pada cemetery Anda saja
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {bookings.map((booking) => (
+                <div key={booking.id} className="rounded-lg border border-border p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {booking.user.firstName} {booking.user.lastName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{booking.user.email}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Plot {booking.plot.plotNumber} • {booking.plot.section} • {booking.plot.row}
+                      </p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <Badge variant="outline" className="mb-2">
+                        {booking.status}
+                      </Badge>
+                      <p className="text-sm font-semibold text-foreground">
+                        {formatRupiah(booking.totalPrice)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {bookings.length === 0 && (
+                <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  Belum ada booking pada cemetery ini.
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       </main>
     </div>
   );

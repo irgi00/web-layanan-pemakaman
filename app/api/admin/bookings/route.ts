@@ -1,45 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/jwt';
+import { canAccessCemetery, getAdminActor, getScopedCemeteryId } from '@/lib/admin';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await getCurrentUser();
+    const admin = await getAdminActor();
 
-    if (!currentUser || (currentUser.role !== 'CEMETERY_ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
-      return NextResponse.json(
-        { error: 'Not authorized' },
-        { status: 403 }
-      );
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    // Get user's cemetery
-    const user = await prisma.user.findUnique({
-      where: { id: currentUser.userId },
-      include: { cemetery: true },
-    });
+    const requestedCemeteryId = request.nextUrl.searchParams.get('cemeteryId');
+    const scopedCemeteryId = getScopedCemeteryId(admin, requestedCemeteryId);
 
-    if (!user?.cemetery) {
+    if (requestedCemeteryId && !canAccessCemetery(admin, requestedCemeteryId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (!scopedCemeteryId && admin.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
-        { error: 'No cemetery assigned' },
+        { error: 'No cemetery assigned to this admin account' },
         { status: 400 }
       );
     }
 
-    // Get cemetery bookings with details
     const bookings = await prisma.booking.findMany({
-      where: { cemeteryId: user.cemetery.id },
+      where: scopedCemeteryId ? { cemeteryId: scopedCemeteryId } : undefined,
       include: {
-        user: { select: { email: true, firstName: true, lastName: true, phoneNumber: true } },
-        plot: { select: { plotNumber: true, section: true } },
+        user: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+          },
+        },
+        cemetery: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+          },
+        },
+        plot: {
+          select: {
+            id: true,
+            plotNumber: true,
+            section: true,
+            row: true,
+          },
+        },
         deceasedProfile: true,
-        serviceBookings: { include: { service: true } },
+        serviceBookings: {
+          include: {
+            service: true,
+          },
+        },
         payment: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(bookings, { status: 200 });
+    return NextResponse.json(
+      {
+        bookings,
+        stats: {
+          total: bookings.length,
+          totalRevenue: bookings.reduce((sum, booking) => sum + booking.totalPrice, 0),
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Get bookings error:', error);
     return NextResponse.json(

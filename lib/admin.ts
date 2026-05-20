@@ -40,3 +40,33 @@ export async function getAdminActor(): Promise<AdminActor | null> {
 
   return user as AdminActor;
 }
+
+export function isSuperAdmin(actor: Pick<AdminActor, 'role'> | null | undefined) {
+  return actor?.role === 'SUPER_ADMIN';
+}
+
+export function getScopedCemeteryId(
+  actor: AdminActor,
+  requestedCemeteryId?: string | null
+) {
+  if (isSuperAdmin(actor)) {
+    return requestedCemeteryId ?? null;
+  }
+
+  return actor.cemeteryId;
+}
+
+export function canAccessCemetery(
+  actor: AdminActor,
+  cemeteryId: string | null | undefined
+) {
+  if (!cemeteryId) {
+    return false;
+  }
+
+  if (isSuperAdmin(actor)) {
+    return true;
+  }
+
+  return actor.cemeteryId === cemeteryId;
+}

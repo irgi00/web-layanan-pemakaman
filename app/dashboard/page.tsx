@@ -8,7 +8,8 @@ import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isAdminRole } from '@/lib/roles';
+import { getRedirectPathByRole, isAdminRole } from '@/lib/roles';
+import { formatRupiah } from '@/lib/utils';
 
 interface User {
   id: string;
@@ -18,25 +19,67 @@ interface User {
   role: string;
 }
 
+interface BookingItem {
+  id: string;
+  userId: string;
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  totalPrice: number;
+  createdAt: string;
+  cemetery: {
+    id: string;
+    name: string;
+    city: string | null;
+    province: string | null;
+  };
+  plot: {
+    id: string;
+    plotNumber: string;
+    section: string;
+    row: string;
+    status: string;
+  };
+  payment: {
+    id: string;
+    status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+    amount: number;
+    createdAt: string;
+  } | null;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        if (!response.ok) {
+        const [userResponse, bookingsResponse] = await Promise.all([
+          fetch('/api/auth/me'),
+          fetch('/api/bookings'),
+        ]);
+
+        if (!userResponse.ok) {
           router.push('/login');
           return;
         }
-        const data = await response.json();
-        if (isAdminRole(data.role)) {
-          router.push('/admin/dashboard');
+
+        const userData = await userResponse.json();
+
+        if (isAdminRole(userData.role)) {
+          router.push(getRedirectPathByRole(userData.role));
           return;
         }
-        setUser(data);
+
+        if (!bookingsResponse.ok) {
+          throw new Error('Gagal memuat data booking');
+        }
+
+        const bookingsData = await bookingsResponse.json();
+
+        setUser(userData);
+        setBookings(Array.isArray(bookingsData.bookings) ? bookingsData.bookings : []);
       } catch (error) {
         console.error(error);
         router.push('/login');
@@ -45,7 +88,7 @@ export default function DashboardPage() {
       }
     };
 
-    fetchUser();
+    fetchDashboardData();
   }, [router]);
 
   const handleLogout = async () => {
@@ -67,6 +110,16 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const activeBookings = bookings.filter((booking) =>
+    ['PENDING', 'CONFIRMED'].includes(booking.status)
+  ).length;
+
+  const formatBookingDate = (value: string) =>
+    new Intl.DateTimeFormat('id-ID', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,11 +166,11 @@ export default function DashboardPage() {
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           <Card className="p-6 bg-card border-border">
             <div className="text-muted-foreground text-sm font-medium mb-2">Pemesanan Aktif</div>
-            <div className="text-3xl font-bold text-foreground">0</div>
+            <div className="text-3xl font-bold text-foreground">{activeBookings}</div>
           </Card>
           <Card className="p-6 bg-card border-border">
             <div className="text-muted-foreground text-sm font-medium mb-2">Total Pemesanan</div>
-            <div className="text-3xl font-bold text-foreground">0</div>
+            <div className="text-3xl font-bold text-foreground">{bookings.length}</div>
           </Card>
           <Card className="p-6 bg-card border-border">
             <div className="text-muted-foreground text-sm font-medium mb-2">Status Akun</div>
@@ -129,16 +182,51 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div>
             <h3 className="text-xl font-bold text-foreground mb-4">Pemesanan Anda</h3>
-            <Card className="p-12 text-center bg-card border-border">
-              <p className="text-muted-foreground mb-4">
-                Belum ada pemesanan. Mulailah dengan menelusuri pemakaman yang tersedia.
-              </p>
-              <Link href="/cemeteries">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Jelajahi Pemakaman
-                </Button>
-              </Link>
-            </Card>
+            {bookings.length === 0 ? (
+              <Card className="p-12 text-center bg-card border-border">
+                <p className="text-muted-foreground mb-4">
+                  Belum ada pemesanan. Mulailah dengan menelusuri pemakaman yang tersedia.
+                </p>
+                <Link href="/cemeteries">
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Jelajahi Pemakaman
+                  </Button>
+                </Link>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {bookings.map((booking) => (
+                  <Card key={booking.id} className="p-6 bg-card border-border">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-semibold text-foreground">
+                          {booking.cemetery.name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          Plot {booking.plot.plotNumber} | {booking.plot.section} | {booking.plot.row}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Dibuat pada {formatBookingDate(booking.createdAt)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Booking ID: {booking.id}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-left md:text-right">
+                        <div className="text-sm font-medium text-primary">{booking.status}</div>
+                        <div className="text-xl font-bold text-foreground">
+                          {formatRupiah(booking.totalPrice)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Pembayaran: {booking.payment?.status || 'BELUM DIBUAT'}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

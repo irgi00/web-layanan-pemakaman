@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import { getRedirectPathByRole } from '@/lib/roles';
+import {
+  ADMIN_DASHBOARD_PATH,
+  getRedirectPathByRole,
+  MEMBER_DASHBOARD_PATH,
+  SUPERADMIN_DASHBOARD_PATH,
+} from '@/lib/roles';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production';
 
@@ -38,18 +43,28 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    if (redirectTo !== '/admin/dashboard') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    if (redirectTo !== ADMIN_DASHBOARD_PATH && redirectTo !== SUPERADMIN_DASHBOARD_PATH) {
+      return NextResponse.redirect(new URL(MEMBER_DASHBOARD_PATH, request.url));
     }
   }
 
-  if (pathname.startsWith('/dashboard')) {
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/member')) {
     if (!role) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (redirectTo === '/admin/dashboard') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    if (redirectTo === ADMIN_DASHBOARD_PATH || redirectTo === SUPERADMIN_DASHBOARD_PATH) {
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
+  }
+
+  if (pathname.startsWith('/superadmin')) {
+    if (!role) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    if (redirectTo !== SUPERADMIN_DASHBOARD_PATH) {
+      return NextResponse.redirect(new URL(getRedirectPathByRole(role), request.url));
     }
   }
 
@@ -57,5 +72,12 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/login', '/admin/:path*', '/dashboard', '/dashboard/:path*'],
+  matcher: [
+    '/login',
+    '/admin/:path*',
+    '/dashboard',
+    '/dashboard/:path*',
+    '/member/:path*',
+    '/superadmin/:path*',
+  ],
 };

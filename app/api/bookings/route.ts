@@ -14,6 +14,86 @@ const createBookingSchema = z.object({
   notes: z.string().optional(),
 });
 
+export async function GET() {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Anda belum masuk' }, { status: 401 });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: { userId: currentUser.userId },
+      include: {
+        cemetery: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+            province: true,
+          },
+        },
+        plot: {
+          select: {
+            id: true,
+            plotNumber: true,
+            section: true,
+            row: true,
+            status: true,
+          },
+        },
+        serviceBookings: {
+          include: {
+            service: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            status: true,
+            amount: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    console.log('[BOOKINGS][GET]', {
+      currentUserId: currentUser.userId,
+      bookingUserIds: bookings.map((booking) => ({
+        bookingId: booking.id,
+        booking_user_id: booking.userId,
+      })),
+    });
+
+    return NextResponse.json(
+      {
+        bookings,
+        stats: {
+          total: bookings.length,
+          active: bookings.filter((booking) =>
+            ['PENDING', 'CONFIRMED'].includes(booking.status)
+          ).length,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Get member bookings error:', error);
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan pada server' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
@@ -34,11 +114,25 @@ export async function POST(request: NextRequest) {
       include: { booking: true, cemetery: true },
     });
 
-    if (!plot || plot.status !== 'available' || plot.booking) {
+    if (!plot || plot.cemeteryId !== data.cemeteryId || plot.status !== 'available' || plot.booking) {
       return NextResponse.json(
         { error: 'Lahan sudah tidak tersedia' },
         { status: 400 }
       );
+    }
+
+    if (data.deceasedProfileId) {
+      const deceasedProfile = await prisma.deceasedProfile.findUnique({
+        where: { id: data.deceasedProfileId },
+        select: { id: true, userId: true },
+      });
+
+      if (!deceasedProfile || deceasedProfile.userId !== currentUser.userId) {
+        return NextResponse.json(
+          { error: 'Profil almarhum tidak valid untuk akun ini' },
+          { status: 403 }
+        );
+      }
     }
 
     // Calculate total price
@@ -71,50 +165,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create booking
-    const booking = await prisma.booking.create({
-      data: {
-        userId: currentUser.userId,
-        cemeteryId: data.cemeteryId,
-        plotId: data.plotId,
-        deceasedProfileId: data.deceasedProfileId,
-        totalPrice,
-        notes: data.notes,
-        status: 'PENDING',
-        serviceBookings: {
-          create: serviceBookingItems.map((service) => ({
-            serviceId: service.serviceId,
-            quantity: service.quantity,
-            price: service.price,
-          })),
+    const { booking, payment } = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          userId: currentUser.userId,
+          cemeteryId: data.cemeteryId,
+          plotId: data.plotId,
+          deceasedProfileId: data.deceasedProfileId,
+          totalPrice,
+          notes: data.notes,
+          status: 'PENDING',
+          serviceBookings: {
+            create: serviceBookingItems.map((service) => ({
+              serviceId: service.serviceId,
+              quantity: service.quantity,
+              price: service.price,
+            })),
+          },
         },
-      },
-      include: {
-        serviceBookings: {
-          include: { service: true },
+        include: {
+          serviceBookings: {
+            include: { service: true },
+          },
         },
-      },
+      });
+
+      await tx.plot.update({
+        where: { id: data.plotId },
+        data: { status: 'reserved' },
+      });
+
+      await tx.cemetery.update({
+        where: { id: data.cemeteryId },
+        data: { availablePlots: { decrement: 1 } },
+      });
+
+      const payment = await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: totalPrice,
+          status: 'PENDING',
+        },
+      });
+
+      return { booking, payment };
     });
 
-    // Update plot status
-    await prisma.plot.update({
-      where: { id: data.plotId },
-      data: { status: 'reserved' },
-    });
-
-    // Update cemetery available plots
-    await prisma.cemetery.update({
-      where: { id: data.cemeteryId },
-      data: { availablePlots: { decrement: 1 } },
-    });
-
-    // Create payment record
-    const payment = await prisma.payment.create({
-      data: {
-        bookingId: booking.id,
-        amount: totalPrice,
-        status: 'PENDING',
-      },
+    console.log('[BOOKINGS][POST]', {
+      currentUserId: currentUser.userId,
+      bookingId: booking.id,
+      booking_user_id: booking.userId,
     });
 
     return NextResponse.json(
