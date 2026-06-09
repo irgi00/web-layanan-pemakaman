@@ -9,16 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-type LoginRole = 'MEMBER' | 'ADMIN';
-
-const roleOptions: Array<{ value: LoginRole; label: string }> = [
-  { value: 'MEMBER', label: 'Member' },
-  { value: 'ADMIN', label: 'Admin' },
-];
-
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<LoginRole>('MEMBER');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,16 +32,13 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          loginAs: selectedRole,
-        }),
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Masuk gagal');
+        setError(data.error || 'Email atau kata sandi salah.');
         return;
       }
 
@@ -72,43 +61,13 @@ export default function LoginPage() {
               <Heart className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Selamat Datang Kembali</h1>
+          <h1 className="text-3xl font-bold text-foreground">Masuk ke MemorialCare</h1>
           <p className="text-muted-foreground">
-            Masuk untuk mengelola pemesanan Anda
+            Gunakan akun Anda untuk mengakses layanan MemorialCare.
           </p>
         </div>
 
         <Card className="p-8 bg-card border-border">
-          <div className="mb-6">
-            <p className="mb-3 text-sm font-medium text-foreground">Masuk sebagai</p>
-            <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/60 p-1">
-              {roleOptions.map((role) => {
-                const isActive = selectedRole === role.value;
-
-                return (
-                  <button
-                    key={role.value}
-                    type="button"
-                    onClick={() => setSelectedRole(role.value)}
-                    className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-muted-foreground hover:bg-background hover:text-foreground'
-                    }`}
-                  >
-                    {role.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {selectedRole === 'ADMIN' && (
-            <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              Login Admin hanya untuk petugas yang memiliki akses
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
@@ -130,14 +89,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-foreground">Kata Sandi</label>
-                {selectedRole === 'MEMBER' && (
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                    Lupa?
-                  </Link>
-                )}
-              </div>
+              <label className="text-sm font-medium text-foreground">Kata Sandi</label>
               <Input
                 type="password"
                 name="password"
@@ -154,18 +106,16 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {loading ? 'Sedang masuk...' : `Masuk sebagai ${selectedRole === 'ADMIN' ? 'Admin' : 'Member'}`}
+              {loading ? 'Sedang masuk...' : 'Masuk'}
             </Button>
           </form>
 
-          {selectedRole === 'MEMBER' && (
-            <p className="text-center text-muted-foreground text-sm mt-6">
-              Belum punya akun?{' '}
-              <Link href="/register" className="text-primary hover:underline font-medium">
-                Daftar sekarang
-              </Link>
-            </p>
-          )}
+          <p className="text-center text-muted-foreground text-sm mt-6">
+            Belum punya akun?{' '}
+            <Link href="/register" className="text-primary hover:underline font-medium">
+              Daftar sekarang
+            </Link>
+          </p>
         </Card>
       </div>
     </div>

@@ -10,7 +10,7 @@ export function isAdminRole(role: string | null | undefined) {
 }
 
 export function isUserRole(role: string | null | undefined) {
-  return role === USER_ROLE;
+  return role === USER_ROLE || role === 'MEMBER';
 }
 
 export function getRedirectPathByRole(role: string | null | undefined) {

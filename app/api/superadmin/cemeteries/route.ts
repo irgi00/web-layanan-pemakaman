@@ -17,6 +17,7 @@ export async function GET() {
         location: true,
         city: true,
         province: true,
+        imageUrl: true,
         totalPlots: true,
         availablePlots: true,
         admins: {
@@ -52,6 +53,7 @@ export async function GET() {
           location: cemetery.location,
           city: cemetery.city,
           province: cemetery.province,
+          imageUrl: cemetery.imageUrl,
           totalPlots: cemetery.plots.length || cemetery.totalPlots,
           availablePlots:
             cemetery.plots.filter((plot) => plot.status === 'available').length ||

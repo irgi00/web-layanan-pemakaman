@@ -2,11 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Users, DollarSign } from 'lucide-react';
+import {
+  ArrowRight,
+  BadgeCheck,
+  CircleDollarSign,
+  MapPin,
+  Trees,
+  Users,
+} from 'lucide-react';
+
 import { BackButton } from '@/components/back-button';
+import { CemeteryImage } from '@/components/cemetery-image';
+import { Header } from '@/components/header';
+import { PublicFooter } from '@/components/public-footer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRupiah } from '@/lib/utils';
 
@@ -23,6 +34,27 @@ interface Cemetery {
   imageUrl?: string;
   contactEmail: string;
   contactPhone: string;
+}
+
+function getAvailabilityMeta(availablePlots: number) {
+  if (availablePlots > 20) {
+    return {
+      label: 'Banyak tersedia',
+      className: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100',
+    };
+  }
+
+  if (availablePlots > 0) {
+    return {
+      label: 'Terbatas',
+      className: 'bg-amber-100 text-amber-800 hover:bg-amber-100',
+    };
+  }
+
+  return {
+    label: 'Penuh',
+    className: 'bg-slate-200 text-slate-700 hover:bg-slate-200',
+  };
 }
 
 export default function CemeteriesPage() {
@@ -80,137 +112,209 @@ export default function CemeteriesPage() {
   }, [page]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <section className="bg-primary/10 py-12 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-4">
-            <BackButton fallbackHref="/" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              Temukan Tempat Peristirahatan yang Tepat
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              Telusuri lahan makam yang tersedia dan temukan pilihan terbaik untuk keluarga Anda.
-            </p>
-            <div>
-              <Link href="/cemeteries/map">
-                <Button variant="outline" className="border-border text-foreground hover:bg-background">
-                  Lihat Peta
-                </Button>
-              </Link>
+      <main>
+        <section className="relative overflow-hidden border-b border-border/70 bg-[linear-gradient(180deg,rgba(240,248,242,1),rgba(255,255,255,1))]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(57,138,89,0.14),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(119,194,149,0.14),transparent_30%)]" />
+          <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+              <div className="space-y-5">
+                <h1 className="max-w-3xl text-3xl font-bold text-balance md:text-4xl lg:text-5xl">
+                  Temukan pemakaman yang paling sesuai dengan kebutuhan keluarga
+                </h1>
+                <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
+                  Kami merapikan tampilan daftar pemakaman agar informasi seperti lokasi, harga
+                  mulai, plot tersedia, dan status lebih mudah dibaca sebelum Anda masuk ke detail.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link href="/cemeteries/map">
+                    <Button variant="outline" className="w-full rounded-full border-primary/20 bg-background/80 sm:w-auto">
+                      Lihat Peta
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button className="w-full rounded-full sm:w-auto">Mulai Sekarang</Button>
+                  </Link>
+                </div>
+              </div>
+
+              <Card className="rounded-[2rem] border-border/80 bg-card/90 p-6 shadow-xl shadow-primary/5">
+                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <div className="rounded-3xl border border-border/70 bg-background p-5">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <p className="mt-4 font-semibold">Lokasi mudah dipindai</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Nama pemakaman dan area tampil lebih menonjol.
+                    </p>
+                  </div>
+                  <div className="rounded-3xl border border-border/70 bg-background p-5">
+                    <CircleDollarSign className="h-5 w-5 text-primary" />
+                    <p className="mt-4 font-semibold">Harga mulai jelas</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Pengguna lebih cepat memperkirakan biaya awal.
+                    </p>
+                  </div>
+                  <div className="rounded-3xl border border-border/70 bg-background p-5">
+                    <Trees className="h-5 w-5 text-primary" />
+                    <p className="mt-4 font-semibold">Status lebih informatif</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Badge ketersediaan membantu proses pemilihan.
+                    </p>
+                  </div>
+                </div>
+              </Card>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="flex-1 py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           {error && (
-            <Card className="p-6 bg-destructive/10 border-destructive mb-8">
-              <p className="text-destructive font-medium">{error}</p>
+            <Card className="mb-8 rounded-3xl border-destructive/30 bg-destructive/10 p-6">
+              <p className="font-medium text-destructive">{error}</p>
             </Card>
           )}
 
           {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 12 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
-                  <div className="p-6 space-y-4">
-                    <Skeleton className="h-6 w-3/4" />
+                <Card key={i} className="overflow-hidden rounded-[1.75rem] border-border/80">
+                  <Skeleton className="h-44 w-full" />
+                  <div className="space-y-4 p-6">
+                    <Skeleton className="h-6 w-2/3" />
                     <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <div className="space-y-2 pt-4">
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <div className="grid gap-3 pt-4 sm:grid-cols-2">
+                      <Skeleton className="h-20 w-full rounded-2xl" />
+                      <Skeleton className="h-20 w-full rounded-2xl" />
                     </div>
+                    <Skeleton className="h-10 w-full rounded-full" />
                   </div>
                 </Card>
               ))}
             </div>
           ) : cemeteries.length === 0 ? (
-            <Card className="p-12 text-center bg-card border-border">
-              <p className="text-lg text-muted-foreground mb-6">Belum ada data pemakaman yang ditemukan.</p>
-              <Link href="/">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Kembali ke Beranda
-                </Button>
-              </Link>
+            <Card className="rounded-[2rem] border-border/80 bg-card p-12 text-center">
+              <p className="text-lg text-muted-foreground">
+                Belum ada data pemakaman yang ditemukan.
+              </p>
+              <div className="mt-6">
+                <Link href="/">
+                  <Button className="rounded-full">Kembali ke Beranda</Button>
+                </Link>
+              </div>
             </Card>
           ) : (
             <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {cemeteries.map((cemetery) => (
-                  <Link key={cemetery.id} href={`/cemeteries/${cemetery.id}`}>
-                    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col bg-card border-border">
-                      <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border-b border-border">
-                        <div className="text-center">
-                          <MapPin className="w-12 h-12 text-primary mx-auto mb-2 opacity-60" />
-                          <p className="text-muted-foreground text-sm">{cemetery.location}</p>
-                        </div>
-                      </div>
+              <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold">Daftar pemakaman tersedia</h2>
+                  <p className="mt-2 text-muted-foreground">
+                    Pilih lokasi yang paling sesuai, lalu lanjutkan ke halaman detail untuk melihat
+                    plot dan layanan yang tersedia.
+                  </p>
+                </div>
+                <Badge className="w-fit rounded-full bg-primary/10 px-4 py-1.5 text-primary hover:bg-primary/10">
+                  {cemeteries.length} pemakaman pada halaman ini
+                </Badge>
+              </div>
 
-                      <div className="p-6 flex-1 flex flex-col">
-                        <h3 className="text-xl font-semibold text-foreground mb-2 text-balance">
-                          {cemetery.name}
-                        </h3>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {cemeteries.map((cemetery) => {
+                  const availability = getAvailabilityMeta(cemetery.availablePlots);
 
-                        {cemetery.description && (
-                          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                            {cemetery.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-3 mt-auto pt-4 border-t border-border">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-primary" />
-                              <span className="text-sm text-foreground font-medium">
-                                {cemetery.availablePlots} lahan tersedia
-                              </span>
-                            </div>
+                  return (
+                    <Link key={cemetery.id} href={`/cemeteries/${cemetery.id}`} className="group">
+                      <Card className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl">
+                        <div className="relative">
+                          <CemeteryImage
+                            src={cemetery.imageUrl}
+                            alt={cemetery.name}
+                            className="h-52 w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/15 to-transparent" />
+                          <div className="absolute right-5 top-5">
+                            <Badge className={`rounded-full px-3 py-1 ${availability.className}`}>
+                              {availability.label}
+                            </Badge>
                           </div>
+                          <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur">
+                              <MapPin className="h-7 w-7" />
+                            </div>
+                            <h3 className="mt-8 text-2xl font-semibold text-balance">
+                              {cemetery.name}
+                            </h3>
+                            <p className="mt-3 flex items-center gap-2 text-sm text-white/85">
+                              <MapPin className="h-4 w-4 text-white" />
+                              {cemetery.location || 'Lokasi akan segera diperbarui'}
+                            </p>
+                          </div>
+                        </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="w-4 h-4 text-accent" />
-                              <span className="text-sm text-foreground font-medium">
+                        <div className="flex flex-1 flex-col p-6">
+                          {cemetery.description && (
+                            <p className="line-clamp-3 text-sm leading-7 text-muted-foreground">
+                              {cemetery.description}
+                            </p>
+                          )}
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-2xl border border-border/70 bg-background p-4">
+                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                Harga mulai
+                              </p>
+                              <p className="mt-2 text-lg font-semibold text-foreground">
                                 {formatRupiah(cemetery.pricePerPlot)}
-                              </span>
+                              </p>
+                            </div>
+                            <div className="rounded-2xl border border-border/70 bg-background p-4">
+                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                Plot tersedia
+                              </p>
+                              <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-foreground">
+                                <Users className="h-4 w-4 text-primary" />
+                                {cemetery.availablePlots}
+                              </p>
                             </div>
                           </div>
 
-                          <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
-                            Lihat Detail
-                          </Button>
+                          <div className="mt-4 flex items-center justify-between rounded-2xl bg-primary/5 px-4 py-3 text-sm">
+                            <span className="text-muted-foreground">Total plot</span>
+                            <span className="font-medium text-foreground">{cemetery.totalPlots}</span>
+                          </div>
+
+                          <div className="mt-6">
+                            <Button className="w-full rounded-full">
+                              Lihat Detail
+                              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 mt-12">
+                <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
                   <Button
                     variant="outline"
                     disabled={page === 1}
                     onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
-                    className="border-border text-foreground hover:bg-muted"
+                    className="rounded-full border-primary/20 bg-background px-5"
                   >
                     Sebelumnya
                   </Button>
-                  <div className="flex items-center gap-2">
-                    <span className="text-foreground font-medium">
-                      Halaman {page} dari {totalPages}
-                    </span>
-                  </div>
+                  <Badge className="rounded-full bg-primary/10 px-4 py-1.5 text-primary hover:bg-primary/10">
+                    Halaman {page} dari {totalPages}
+                  </Badge>
                   <Button
                     variant="outline"
                     disabled={page === totalPages}
                     onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
-                    className="border-border text-foreground hover:bg-muted"
+                    className="rounded-full border-primary/20 bg-background px-5"
                   >
                     Berikutnya
                   </Button>
@@ -218,8 +322,35 @@ export default function CemeteriesPage() {
               )}
             </>
           )}
-        </div>
-      </section>
+
+          <Card className="mt-12 rounded-[2rem] border-border/80 bg-[linear-gradient(180deg,rgba(242,249,244,1),rgba(255,255,255,1))] p-8 shadow-sm">
+            <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <div className="flex items-center gap-2 text-primary">
+                  <BadgeCheck className="h-5 w-5" />
+                  <p className="font-medium">Alur publik tetap sama</p>
+                </div>
+                <h3 className="mt-4 text-2xl font-semibold">
+                  Setelah memilih pemakaman, pengguna tetap masuk ke proses detail dan booking yang
+                  sudah ada
+                </h3>
+                <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
+                  Pembaruan ini hanya memoles presentasi visual agar daftar lokasi terasa lebih
+                  siap dipilih tanpa menyentuh query data, alur booking, maupun auth.
+                </p>
+              </div>
+
+              <Link href="/about">
+                <Button variant="outline" className="rounded-full border-primary/20 bg-background px-6">
+                  Pelajari MemorialCare
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </section>
+      </main>
+
+      <PublicFooter />
     </div>
   );
 }

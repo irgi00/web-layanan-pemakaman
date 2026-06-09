@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword } from '@/lib/auth';
 import { createToken } from '@/lib/jwt';
-import { getRedirectPathByRole, matchesLoginRoleOption } from '@/lib/roles';
+import { getRedirectPathByRole } from '@/lib/roles';
 import { z } from 'zod';
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string(),
-  loginAs: z.enum(['MEMBER', 'ADMIN']).default('MEMBER'),
+  password: z.string().min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Email atau kata sandi tidak valid' },
+        { error: 'Email atau kata sandi salah.' },
         { status: 401 }
       );
     }
@@ -33,16 +32,8 @@ export async function POST(request: NextRequest) {
 
     if (!passwordMatch) {
       return NextResponse.json(
-        { error: 'Email atau kata sandi tidak valid' },
+        { error: 'Email atau kata sandi salah.' },
         { status: 401 }
-      );
-    }
-
-    if (!matchesLoginRoleOption(data.loginAs, user.role)) {
-      const expectedRoleLabel = data.loginAs === 'ADMIN' ? 'Admin' : 'Member';
-      return NextResponse.json(
-        { error: `Akun ini tidak terdaftar sebagai ${expectedRoleLabel}` },
-        { status: 403 }
       );
     }
 
@@ -81,7 +72,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validasi gagal', details: error.errors },
+        { error: 'Email dan kata sandi wajib diisi dengan format yang valid.' },
         { status: 400 }
       );
     }

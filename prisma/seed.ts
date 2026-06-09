@@ -354,6 +354,8 @@ async function main() {
 
   // Create sample plots
   const existingPlots = await prisma.plot.count({ where: { cemeteryId: cemetery.id } });
+  const cemeteryLatitude = cemetery.latitude ?? -6.2;
+  const cemeteryLongitude = cemetery.longitude ?? 106.8166;
   if (existingPlots === 0) {
     for (let i = 1; i <= 10; i++) {
       await prisma.plot.create({
@@ -363,8 +365,8 @@ async function main() {
           section: `Section ${Math.ceil(i / 5)}`,
           row: `Row ${(i % 5) + 1}`,
           status: 'available',
-          latitude: cemetery.latitude + (i * 0.001),
-          longitude: cemetery.longitude + (i * 0.001),
+          latitude: cemeteryLatitude + (i * 0.001),
+          longitude: cemeteryLongitude + (i * 0.001),
         },
       });
     }
@@ -436,6 +438,10 @@ async function main() {
     });
   } else {
     deceasedProfile = await prisma.deceasedProfile.findFirst({ where: { userId: customerUser.id } });
+  }
+
+  if (!deceasedProfile) {
+    throw new Error(`Deceased profile not found for user ${customerUser.id}`);
   }
 
   console.log('Deceased profile created:', deceasedProfile.firstName, deceasedProfile.lastName);

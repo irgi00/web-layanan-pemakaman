@@ -10,6 +10,7 @@ import {
   Trash2,
   Wrench,
 } from 'lucide-react';
+import { PortalShell } from '@/components/portal-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -102,6 +103,11 @@ export default function AdminServicesPage() {
   );
 
   const inactiveCount = services.length - activeCount;
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/');
+  };
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -242,7 +248,7 @@ export default function AdminServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_34%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(246,248,251,1))] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <Skeleton className="h-24 w-full" />
           <div className="grid gap-4 md:grid-cols-3">
@@ -261,7 +267,14 @@ export default function AdminServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
+    <PortalShell
+      role={user.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'CEMETERY_ADMIN'}
+      roleLabel={user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Cemetery Admin'}
+      title="Kelola Layanan"
+      description="Atur layanan pemakaman, harga, kategori, dan status aktif tanpa mengubah alur booking utama."
+      userEmail={user.email}
+      onLogout={handleLogout}
+    >
       <div className="mx-auto max-w-7xl space-y-8">
         <Card className="overflow-hidden border-border bg-card">
           <div className="flex flex-col gap-6 bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 px-6 py-8 text-white md:flex-row md:items-end md:justify-between">
@@ -280,13 +293,6 @@ export default function AdminServicesPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                variant="outline"
-                className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                onClick={() => router.push('/admin/dashboard')}
-              >
-                Kembali ke Dasbor
-              </Button>
               <Button
                 className="bg-white text-emerald-900 hover:bg-emerald-50"
                 onClick={openCreateDialog}
@@ -448,6 +454,8 @@ export default function AdminServicesPage() {
           )}
         </Card>
       </div>
+ 
+      
 
       <Dialog
         open={dialogOpen}
@@ -611,6 +619,6 @@ export default function AdminServicesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PortalShell>
   );
 }

@@ -30,7 +30,15 @@ export async function proxy(request: NextRequest) {
   const role = await getCurrentRole(request);
   const redirectTo = role ? getRedirectPathByRole(role) : null;
 
-  if (pathname === '/login' || pathname === '/admin/login') {
+  if (pathname === '/admin/login') {
+    if (redirectTo) {
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
+
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (pathname === '/login') {
     if (redirectTo) {
       return NextResponse.redirect(new URL(redirectTo, request.url));
     }
@@ -40,7 +48,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith('/admin')) {
     if (!role) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     if (redirectTo !== ADMIN_DASHBOARD_PATH && redirectTo !== SUPERADMIN_DASHBOARD_PATH) {
@@ -60,7 +68,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith('/superadmin')) {
     if (!role) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     if (redirectTo !== SUPERADMIN_DASHBOARD_PATH) {

@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 const faqItems = [
@@ -33,25 +34,35 @@ const faqItems = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="border-t border-border bg-card/40">
+    <section
+      id="faq"
+      className="border-y border-border/70 bg-[linear-gradient(180deg,rgba(242,249,244,0.9),rgba(255,255,255,1))]"
+    >
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Pertanyaan Umum</p>
-          <h2 className="mt-4 text-3xl font-bold md:text-4xl">Pertanyaan Umum</h2>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/90 px-4 py-2 text-sm text-primary shadow-sm">
+            <HelpCircle className="h-4 w-4" />
+            Pertanyaan Umum
+          </div>
+          <h2 className="mt-5 text-3xl font-bold md:text-4xl">Jawaban singkat yang mudah dipahami</h2>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
             Jawaban singkat untuk membantu Anda memahami proses booking makam, layanan
             pemakaman, pembayaran, dan status lahan.
           </p>
         </div>
 
-        <Card className="mx-auto mt-12 max-w-4xl rounded-3xl border-border bg-background p-6 shadow-sm sm:p-8">
+        <Card className="mx-auto mt-12 max-w-4xl rounded-[2rem] border-border/80 bg-background/95 p-6 shadow-xl shadow-primary/5 sm:p-8">
           <Accordion type="single" collapsible className="w-full">
             {faqItems.map((item, index) => (
-              <AccordionItem key={item.question} value={`item-${index}`} className="border-border">
-                <AccordionTrigger className="py-5 text-base font-semibold text-foreground hover:no-underline">
+              <AccordionItem
+                key={item.question}
+                value={`item-${index}`}
+                className="rounded-2xl border border-transparent px-1 transition-colors data-[state=open]:border-primary/10 data-[state=open]:bg-primary/5"
+              >
+                <AccordionTrigger className="px-4 py-5 text-left text-base font-semibold text-foreground hover:no-underline">
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className="pb-5 text-base leading-7 text-muted-foreground">
+                <AccordionContent className="px-4 pb-5 text-base leading-7 text-muted-foreground">
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>

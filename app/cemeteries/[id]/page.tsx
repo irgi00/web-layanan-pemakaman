@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Crown, Gem, Loader2, PackageCheck } from 'lucide-react';
+import { Check, Crown, Gem, Loader2, MapPin, PackageCheck } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
+import { CemeteryImage } from '@/components/cemetery-image';
+import { Header } from '@/components/header';
+import { PublicFooter } from '@/components/public-footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +40,9 @@ interface ServiceBundle {
 interface CemeteryResponse {
   id: string;
   name: string;
+  location?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
   plots: Plot[];
   services: ServiceBundle[];
 }
@@ -202,45 +208,78 @@ export default function CemeteryDetailPage({
 
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-sm text-muted-foreground">Memuat pilihan makam dan bundle layanan...</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <p className="text-sm text-muted-foreground">Memuat pilihan makam dan bundle layanan...</p>
+          </div>
         </div>
+        <PublicFooter />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-xl border border-destructive bg-destructive/10 p-6">
-          <p className="font-medium text-destructive">{error}</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl rounded-xl border border-destructive bg-destructive/10 p-6">
+            <p className="font-medium text-destructive">{error}</p>
+          </div>
         </div>
+        <PublicFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-10">
-        <div className="space-y-3">
-          <BackButton fallbackHref="/cemeteries" />
-          <Badge variant="outline" className="rounded-full px-3 py-1">
-            Paket pemesanan
-          </Badge>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Pilih Lahan dan Paket Layanan
-            </h1>
-            <p className="mt-2 max-w-3xl text-muted-foreground">
-              {cemetery?.name
-                ? `Booking di ${cemetery.name} sekarang lebih cepat. Pilih lahan, lalu langsung tentukan paket layanan seperti Reguler, VIP, atau VVIP tanpa klik layanan satu per satu.`
-                : 'Pilih lahan makam dan tentukan paket layanan terbaik untuk kebutuhan keluarga Anda.'}
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-10">
+          <div className="space-y-3">
+            <BackButton fallbackHref="/cemeteries" /> 
+            <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-card shadow-sm">
+              <div className="relative">
+                <CemeteryImage
+                  src={cemetery?.imageUrl}
+                  alt={cemetery?.name || 'Cemetery'}
+                  className="h-72 w-full object-cover md:h-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/15 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
+                  <h1 className="text-3xl font-bold md:text-4xl">Pilih Lahan dan Paket Layanan</h1>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-white/85 md:text-base">
+                    {cemetery?.name
+                      ? `Booking di ${cemetery.name} sekarang lebih cepat. Pilih lahan, lalu langsung tentukan paket layanan seperti Reguler, VIP, atau VVIP tanpa klik layanan satu per satu.`
+                      : 'Pilih lahan makam dan tentukan paket layanan terbaik untuk kebutuhan keluarga Anda.'}
+                  </p>
+                </div>
+              </div>
 
-        <section className="space-y-5">
+              <div className="grid gap-5 p-6 md:grid-cols-[minmax(0,1.3fr)_minmax(220px,0.7fr)] md:p-8">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tentang pemakaman</p>
+                  <p className="mt-2 leading-7 text-muted-foreground">
+                    {cemetery?.description ||
+                      'Informasi tambahan mengenai pemakaman ini akan ditampilkan di sini saat tersedia.'}
+                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-border/70 bg-muted/30 p-5">
+                  <p className="text-sm font-medium text-muted-foreground">Lokasi</p>
+                  <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-foreground">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>{cemetery?.location || 'Lokasi akan segera diperbarui'}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section className="space-y-5">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">1. Pilih Lahan Makam</h2>
             <p className="text-sm text-muted-foreground">
@@ -311,9 +350,9 @@ export default function CemeteryDetailPage({
               })
             )}
           </div>
-        </section>
+          </section>
 
-        <section className="space-y-5">
+          <section className="space-y-5">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">2. Pilih Bundle Layanan</h2>
             <p className="text-sm text-muted-foreground">
@@ -416,73 +455,75 @@ export default function CemeteryDetailPage({
               })}
             </div>
           )}
-        </section>
+          </section>
 
-        {selectedPlotData && (
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle>Ringkasan Pesanan</CardTitle>
-              <CardDescription>
-                Tinjau pilihan lahan dan bundle layanan sebelum lanjut ke pembayaran.
-              </CardDescription>
-            </CardHeader>
+          {selectedPlotData && (
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle>Ringkasan Pesanan</CardTitle>
+                <CardDescription>
+                  Tinjau pilihan lahan dan bundle layanan sebelum lanjut ke pembayaran.
+                </CardDescription>
+              </CardHeader>
 
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-sm text-muted-foreground">Lahan makam</p>
-                  <p className="mt-1 font-semibold text-foreground">
-                    {selectedPlotData.section} - {selectedPlotData.plotNumber}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {formatRupiah(selectedPlotData.price || 0)}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-sm text-muted-foreground">Bundle layanan</p>
-                  <p className="mt-1 font-semibold text-foreground">
-                    {selectedBundleData?.name || 'Tanpa bundle tambahan'}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {formatRupiah(selectedBundleData?.price || 0)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total estimasi pembayaran</p>
-                    <p className="mt-1 text-3xl font-bold text-foreground">
-                      {formatRupiah(totalPrice)}
+              <CardContent className="space-y-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-muted/20 p-4">
+                    <p className="text-sm text-muted-foreground">Lahan makam</p>
+                    <p className="mt-1 font-semibold text-foreground">
+                      {selectedPlotData.section} - {selectedPlotData.plotNumber}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formatRupiah(selectedPlotData.price || 0)}
                     </p>
                   </div>
-                  <Badge className="bg-primary hover:bg-primary">
-                    {selectedBundleData ? '1 bundle dipilih' : 'Tanpa bundle'}
-                  </Badge>
-                </div>
-              </div>
 
-              <Button
-                type="button"
-                className="w-full"
-                onClick={handleContinue}
-                disabled={loading || !canContinue}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  'Lanjutkan ke Pembayaran'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+                  <div className="rounded-xl border border-border bg-muted/20 p-4">
+                    <p className="text-sm text-muted-foreground">Bundle layanan</p>
+                    <p className="mt-1 font-semibold text-foreground">
+                      {selectedBundleData?.name || 'Tanpa bundle tambahan'}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formatRupiah(selectedBundleData?.price || 0)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total estimasi pembayaran</p>
+                      <p className="mt-1 text-3xl font-bold text-foreground">
+                        {formatRupiah(totalPrice)}
+                      </p>
+                    </div>
+                    <Badge className="bg-primary hover:bg-primary">
+                      {selectedBundleData ? '1 bundle dipilih' : 'Tanpa bundle'}
+                    </Badge>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={handleContinue}
+                  disabled={loading || !canContinue}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    'Lanjutkan ke Pembayaran'
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
+      <PublicFooter />
     </div>
   );
 }

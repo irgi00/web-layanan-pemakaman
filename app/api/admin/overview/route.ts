@@ -54,6 +54,7 @@ export async function GET() {
               location: true,
               city: true,
               province: true,
+              imageUrl: true,
             },
           }),
     ]);
