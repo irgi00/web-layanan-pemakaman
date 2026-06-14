@@ -124,25 +124,6 @@ export default function MemberDashboardPage() {
               </Button>
             </Link>
           }
-          aside={
-            <DashboardAsideCard title="Ringkasan Akun">
-              <p className="font-medium text-foreground">{user?.email}</p>
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Booking aktif
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{stats.active}</p>
-                </div>
-                <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Total transaksi
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{stats.total}</p>
-                </div>
-              </div>
-            </DashboardAsideCard>
-          }
         />
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -168,35 +149,7 @@ export default function MemberDashboardPage() {
           />
         </div>
 
-        <DashboardSection
-          title="Akses Cepat"
-          description="Navigasi ke fitur utama akun Anda dengan cepat."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Card className="group flex cursor-pointer flex-col gap-3 rounded-[24px] border-white/70 bg-white/80 p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20">
-              <Link href="/member/bookings" className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">Riwayat Pemesanan</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Lihat semua booking dan status pembayaran Anda.
-                  </p>
-                </div>
-                <ArrowRight className="size-5 shrink-0 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
-              </Link>
-            </Card>
-            <Card className="group flex cursor-pointer flex-col gap-3 rounded-[24px] border-white/70 bg-white/80 p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20">
-              <Link href="/cemeteries" className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">Jelajahi Pemakaman</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Temukan dan pesan plot makam yang tersedia.
-                  </p>
-                </div>
-                <ArrowRight className="size-5 shrink-0 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
-              </Link>
-            </Card>
-          </div>
-        </DashboardSection>
+        
       </div>
     </PortalShell>
   );

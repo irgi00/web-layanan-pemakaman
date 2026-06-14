@@ -3,17 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { AdminBookingsManagementPage } from '@/components/admin-bookings-management-page';
+import { AdminPaymentReviewPage } from '@/components/admin-payment-review-page';
 
-interface AdminUser {
-  id: string;
-  email: string;
-  role: string;
-}
-
-export default function AdminBookingsPage() {
+export default function SuperadminPaymentsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<AdminUser | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,17 +27,12 @@ export default function AdminBookingsPage() {
 
         const me = await meResponse.json();
 
-        if (me.role === 'SUPER_ADMIN') {
-          router.push('/superadmin/bookings');
+        if (me.role !== 'SUPER_ADMIN') {
+          router.push('/admin/dashboard');
           return;
         }
 
-        if (me.role !== 'CEMETERY_ADMIN') {
-          router.push('/login');
-          return;
-        }
-
-        setUser(me);
+        setUserEmail(me.email);
       } catch (error) {
         console.error(error);
         router.push('/admin/login');
@@ -64,21 +53,21 @@ export default function AdminBookingsPage() {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_34%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(246,248,251,1))] px-4 py-12">
         <div className="mx-auto max-w-7xl">
-          <Card className="border-white/70 bg-white/90 p-8">Memuat data booking...</Card>
+          <Card className="border-white/70 bg-white/90 p-8">Memuat data pembayaran global...</Card>
         </div>
       </div>
     );
   }
 
   return (
-    <AdminBookingsManagementPage
-      role="CEMETERY_ADMIN"
-      roleLabel="Cemetery Admin"
-      title="Daftar Booking"
-      description="Kelola booking yang masuk ke cemetery Anda."
-      userEmail={user?.email}
+    <AdminPaymentReviewPage
+      role="SUPER_ADMIN"
+      roleLabel="Super Admin"
+      title="Semua Pembayaran"
+      description="Pantau pembayaran dari seluruh cemetery dan lakukan override bila dibutuhkan."
+      userEmail={userEmail}
       onLogout={handleLogout}
-      scopeHint="Cemetery Admin hanya dapat memproses booking dari cemetery yang dikelolanya dan baru bisa melanjutkan booking setelah pembayaran diverifikasi."
+      scopeHint="Super Admin dapat melihat semua pembayaran, memfilter status, dan memvalidasi seluruh cemetery dalam satu halaman."
     />
   );
 }

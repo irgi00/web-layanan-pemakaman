@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendPaymentConfirmation, sendBookingConfirmation } from '@/lib/email-service';
+import { sendPaymentConfirmation } from '@/lib/email-service';
 import { formatRupiah } from '@/lib/utils';
 
 /**
  * Stripe webhook handler
- * Receives payment events from Stripe and updates booking status
+ * Receives payment events from Stripe and updates payment review status
  */
 export async function POST(request: NextRequest) {
   try {
@@ -51,19 +51,13 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       );
     }
 
-    // Update payment
+    // Mark payment as awaiting admin review instead of auto-confirming the booking.
     await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        status: 'COMPLETED',
-        paidAt: new Date(),
+        status: 'PENDING_VERIFICATION',
+        rejectionReason: null,
       },
-    });
-
-    // Update booking
-    await prisma.booking.update({
-      where: { id: payment.bookingId },
-      data: { status: 'CONFIRMED' },
     });
 
     // Send payment confirmation email
@@ -80,8 +74,8 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       data: {
         userId: payment.booking.userId,
         type: 'PAYMENT_RECEIVED',
-        title: 'Pembayaran Dikonfirmasi',
-        message: `Pembayaran Anda sebesar ${formatRupiah(payment.amount)} telah diterima dan dikonfirmasi.`,
+        title: 'Pembayaran Menunggu Verifikasi',
+        message: `Pembayaran Anda sebesar ${formatRupiah(payment.amount)} sudah tercatat dan sedang menunggu verifikasi admin.`,
         relatedBookingId: payment.bookingId,
       },
     });

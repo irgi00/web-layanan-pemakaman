@@ -2,15 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword } from '@/lib/auth';
 import { getAdminActor, isSuperAdmin } from '@/lib/admin';
 import { prisma } from '@/lib/prisma';
+import { cemeteryAdminSelect, createCemeteryAdminSchema, normalizeCemeteryId } from '@/lib/superadmin-admins';
 import { z } from 'zod';
-
-const createAdminSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().trim().min(1),
-  lastName: z.string().trim().min(1),
-  password: z.string().min(6),
-  cemeteryId: z.string().uuid(),
-});
 
 export async function GET() {
   try {
@@ -22,21 +15,7 @@ export async function GET() {
 
     const admins = await prisma.user.findMany({
       where: { role: 'CEMETERY_ADMIN' },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        cemeteryId: true,
-        createdAt: true,
-        cemetery: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-          },
-        },
-      },
+      select: cemeteryAdminSelect,
       orderBy: [{ createdAt: 'desc' }],
     });
 
@@ -59,20 +38,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const data = createAdminSchema.parse(body);
+    const data = createCemeteryAdminSchema.parse(body);
+    const cemeteryId = normalizeCemeteryId(data.cemeteryId);
 
-    const cemetery = await prisma.cemetery.findUnique({
-      where: { id: data.cemeteryId },
-      select: { id: true, name: true },
-    });
+    if (cemeteryId) {
+      const cemetery = await prisma.cemetery.findUnique({
+        where: { id: cemeteryId },
+        select: { id: true, name: true },
+      });
 
-    if (!cemetery) {
-      return NextResponse.json({ error: 'Cemetery not found' }, { status: 404 });
+      if (!cemetery) {
+        return NextResponse.json({ error: 'Cemetery not found' }, { status: 404 });
+      }
     }
 
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
-      select: { id: true },
+      select: { id: true, role: true },
     });
 
     if (existingUser) {
@@ -90,23 +72,9 @@ export async function POST(request: NextRequest) {
         lastName: data.lastName,
         passwordHash,
         role: 'CEMETERY_ADMIN',
-        cemeteryId: data.cemeteryId,
+        cemeteryId,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        cemeteryId: true,
-        createdAt: true,
-        cemetery: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-          },
-        },
-      },
+      select: cemeteryAdminSelect,
     });
 
     return NextResponse.json(

@@ -53,20 +53,63 @@ export async function GET(request: NextRequest) {
         deceasedProfile: true,
         serviceBookings: {
           include: {
-            service: true,
+            service: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
           },
         },
-        payment: true,
+        auditLogs: {
+          where: {
+            entityType: 'Booking',
+            action: 'BOOKING_PROCESS_STARTED',
+          },
+          select: {
+            id: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        payment: {
+          include: {
+            verifiedBy: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    const bookingsWithProcessingState = bookings.map((booking) => {
+      const { auditLogs, ...bookingData } = booking;
+      const latestProcessLog = auditLogs[0] ?? null;
+
+      return {
+        ...bookingData,
+        isProcessingStarted: Boolean(latestProcessLog),
+        processingStartedAt: latestProcessLog?.createdAt ?? null,
+      };
+    });
+
     return NextResponse.json(
       {
-        bookings,
+        bookings: bookingsWithProcessingState,
         stats: {
-          total: bookings.length,
-          totalRevenue: bookings.reduce((sum, booking) => sum + booking.totalPrice, 0),
+          total: bookingsWithProcessingState.length,
+          totalRevenue: bookingsWithProcessingState.reduce(
+            (sum, booking) => sum + booking.totalPrice,
+            0
+          ),
         },
       },
       { status: 200 }

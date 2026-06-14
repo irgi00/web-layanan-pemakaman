@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookCopy,
   Building2,
+  CreditCard,
   LayoutDashboard,
   MapPinned,
   Trees,
@@ -46,6 +47,7 @@ const portalNavigationByRole: Record<PortalRole, PortalNavSection[]> = {
       label: 'Operasional',
       items: [
         { href: '/admin/plots', label: 'Kelola Plot Makam', icon: Trees },
+        { href: '/admin/payments', label: 'Verifikasi Pembayaran', icon: CreditCard },
         { href: '/admin/bookings', label: 'Daftar Booking', icon: BookCopy },
         { href: '/admin/cemetery', label: 'Informasi Cemetery', icon: MapPinned },
       ],
@@ -67,6 +69,7 @@ const portalNavigationByRole: Record<PortalRole, PortalNavSection[]> = {
     {
       label: 'Monitoring',
       items: [
+        { href: '/superadmin/payments', label: 'Semua Pembayaran', icon: CreditCard },
         { href: '/superadmin/bookings', label: 'Riwayat Booking', icon: BookCopy },
         { href: '/superadmin/statistics', label: 'Statistik', icon: BarChart3 },
       ],

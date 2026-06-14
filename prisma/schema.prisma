@@ -25,8 +25,10 @@ enum BookingStatus {
 
 enum PaymentStatus {
   PENDING
+  PENDING_VERIFICATION
   COMPLETED
   FAILED
+  REJECTED
   REFUNDED
 }
 
@@ -56,6 +58,7 @@ model User {
   deceasedProfiles  DeceasedProfile[]
   notifications     Notification[]
   auditLogs         AuditLog[]      @relation("UserAuditLogs")
+  verifiedPayments  Payment[]       @relation("PaymentVerifiedBy")
 
   @@index([email])
   @@index([cemeteryId])
@@ -219,12 +222,18 @@ model Payment {
   stripePaymentId   String?           @unique
   stripeCustomerId  String?
   paymentMethod     String?
+  proofUrl          String?
+  rejectionReason   String?
+  verifiedAt        DateTime?
+  verifiedById      String?           @db.Uuid
+  verifiedBy        User?             @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
   paidAt            DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   
   @@index([bookingId])
   @@index([status])
+  @@index([verifiedById])
 }
 
 model Notification {

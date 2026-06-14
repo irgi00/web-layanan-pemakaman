@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In production, integrate with Stripe here
-    // For now, return a payment session URL
-    const paymentUrl = `/api/payments/${booking.payment.id}/process`;
+    // In production, integrate with Stripe here.
+    // For now, route users to the payment proof submission page.
+    const paymentUrl = `/payments/${booking.payment.id}`;
 
     return NextResponse.json(
       {

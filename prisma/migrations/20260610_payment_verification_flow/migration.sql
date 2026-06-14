@@ -1,0 +1,16 @@
+ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'PENDING_VERIFICATION';
+ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
+
+ALTER TABLE "Payment"
+ADD COLUMN "proofUrl" TEXT,
+ADD COLUMN "rejectionReason" TEXT,
+ADD COLUMN "verifiedAt" TIMESTAMP(3),
+ADD COLUMN "verifiedById" UUID;
+
+ALTER TABLE "Payment"
+ADD CONSTRAINT "Payment_verifiedById_fkey"
+FOREIGN KEY ("verifiedById") REFERENCES "User"("id")
+ON DELETE SET NULL
+ON UPDATE CASCADE;
+
+CREATE INDEX IF NOT EXISTS "Payment_verifiedById_idx" ON "Payment"("verifiedById");

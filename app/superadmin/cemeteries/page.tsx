@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
+import { CloudinaryUpload } from '@/components/cloudinary-upload';
 import { CemeteryImage } from '@/components/cemetery-image';
 import {
   DashboardHero,
@@ -14,7 +15,6 @@ import { PortalShell } from '@/components/portal-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Table,
@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { isSupportedCemeteryImageUrl } from '@/lib/cemetery-image';
+import { DEFAULT_CEMETERY_IMAGE, isSupportedCemeteryImageUrl } from '@/lib/cemetery-image';
 
 interface CemeteryItem {
   id: string;
@@ -257,19 +257,24 @@ export default function SuperadminCemeteriesPage() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="superadmin-cemetery-image-url">URL gambar</Label>
-                  <Input
-                    id="superadmin-cemetery-image-url"
-                    value={imageUrlInput}
-                    onChange={(event) => setImageUrlInput(event.target.value)}
-                    placeholder="https://... atau /images/cemeteries/nama-gambar.jpg"
-                    disabled={!selectedCemetery}
-                  />
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Kosongkan field ini untuk memakai placeholder default pada kartu dan detail cemetery.
-                  </p>
-                </div>
+                <CloudinaryUpload
+                  value={imageUrlInput}
+                  onChange={setImageUrlInput}
+                  previewAlt={
+                    selectedCemetery
+                      ? `Preview gambar ${selectedCemetery.name}`
+                      : 'Preview gambar cemetery'
+                  }
+                  inputLabel="URL gambar"
+                  inputPlaceholder="https://res.cloudinary.com/... atau /images/cemeteries/nama-gambar.jpg"
+                  helperText="Kosongkan field ini untuk memakai placeholder default pada kartu dan detail cemetery."
+                  emptyStateTitle="Belum ada foto cemetery"
+                  emptyStateDescription="Pilih cemetery lalu upload foto dari perangkat lokal agar preview publik langsung diperbarui."
+                  fallbackSrc={DEFAULT_CEMETERY_IMAGE}
+                  clearButtonText="Pakai Placeholder"
+                  disabled={!selectedCemetery}
+                  showPreview={false}
+                />
 
                 {selectedCemetery && (
                   <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -313,7 +318,7 @@ export default function SuperadminCemeteriesPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Preview publik</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Gambar ini akan dipakai di halaman daftar dan detail cemetery saat tersedia.
+                    Gambar ini akan dipakai di halaman daftar dan detail cemetery saat tersedia, termasuk preview beranda bila data dipakai di sana.
                   </p>
                 </div>
                 <div className="overflow-hidden rounded-[20px] border border-border/70 bg-muted/30">

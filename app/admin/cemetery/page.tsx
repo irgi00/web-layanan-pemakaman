@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, MapPin } from 'lucide-react';
-import { CemeteryImage } from '@/components/cemetery-image';
+import { CloudinaryUpload } from '@/components/cloudinary-upload';
 import { DashboardSection } from '@/components/dashboard-shell';
 import { PortalShell } from '@/components/portal-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { isSupportedCemeteryImageUrl } from '@/lib/cemetery-image';
+import { DEFAULT_CEMETERY_IMAGE, isSupportedCemeteryImageUrl } from '@/lib/cemetery-image';
 
 interface AdminUser {
   id: string;
@@ -303,30 +301,22 @@ export default function AdminCemeteryInfoPage() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Preview gambar cemetery</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Tempel URL eksternal atau path lokal seperti `/images/cemeteries/nama.jpg`.
+                      Upload foto dari perangkat lokal atau tempel URL/path manual jika dibutuhkan.
                     </p>
                   </div>
 
-                  <div className="overflow-hidden rounded-[20px] border border-border/70 bg-muted/30">
-                    <CemeteryImage
-                      src={imageUrlInput}
-                      alt={`Preview gambar ${cemetery.name}`}
-                      className="h-56 w-full object-cover"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cemetery-image-url">URL gambar</Label>
-                    <Input
-                      id="cemetery-image-url"
-                      value={imageUrlInput}
-                      onChange={(event) => setImageUrlInput(event.target.value)}
-                      placeholder="https://... atau /images/cemeteries/nama-gambar.jpg"
-                    />
-                    <p className="text-xs leading-5 text-muted-foreground">
-                      Kosongkan field ini jika ingin kembali memakai placeholder default.
-                    </p>
-                  </div>
+                  <CloudinaryUpload
+                    value={imageUrlInput}
+                    onChange={setImageUrlInput}
+                    previewAlt={`Preview gambar ${cemetery.name}`}
+                    inputLabel="URL gambar"
+                    inputPlaceholder="https://res.cloudinary.com/... atau /images/cemeteries/nama-gambar.jpg"
+                    helperText="Kosongkan field ini jika ingin kembali memakai placeholder default."
+                    emptyStateTitle="Belum ada foto cemetery"
+                    emptyStateDescription="Upload foto preview pemakaman agar kartu dan detail cemetery tampil lebih lengkap."
+                    fallbackSrc={DEFAULT_CEMETERY_IMAGE}
+                    clearButtonText="Pakai Placeholder"
+                  />
 
                   {imageFormError && (
                     <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

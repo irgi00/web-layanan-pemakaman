@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { AdminBookingsManagementPage } from '@/components/admin-bookings-management-page';
+import { AdminPaymentReviewPage } from '@/components/admin-payment-review-page';
 
 interface AdminUser {
   id: string;
@@ -11,7 +11,7 @@ interface AdminUser {
   role: string;
 }
 
-export default function AdminBookingsPage() {
+export default function AdminPaymentsPage() {
   const router = useRouter();
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ export default function AdminBookingsPage() {
         const me = await meResponse.json();
 
         if (me.role === 'SUPER_ADMIN') {
-          router.push('/superadmin/bookings');
+          router.push('/superadmin/payments');
           return;
         }
 
@@ -64,21 +64,21 @@ export default function AdminBookingsPage() {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_34%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(246,248,251,1))] px-4 py-12">
         <div className="mx-auto max-w-7xl">
-          <Card className="border-white/70 bg-white/90 p-8">Memuat data booking...</Card>
+          <Card className="border-white/70 bg-white/90 p-8">Memuat verifikasi pembayaran...</Card>
         </div>
       </div>
     );
   }
 
   return (
-    <AdminBookingsManagementPage
+    <AdminPaymentReviewPage
       role="CEMETERY_ADMIN"
       roleLabel="Cemetery Admin"
-      title="Daftar Booking"
-      description="Kelola booking yang masuk ke cemetery Anda."
+      title="Verifikasi Pembayaran"
+      description="Tinjau bukti pembayaran yang masuk ke cemetery Anda."
       userEmail={user?.email}
       onLogout={handleLogout}
-      scopeHint="Cemetery Admin hanya dapat memproses booking dari cemetery yang dikelolanya dan baru bisa melanjutkan booking setelah pembayaran diverifikasi."
+      scopeHint="Cemetery Admin hanya dapat melihat dan memvalidasi pembayaran dari cemetery yang ditugaskan kepadanya."
     />
   );
 }

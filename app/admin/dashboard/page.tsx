@@ -199,19 +199,6 @@ export default function AdminDashboardPage() {
                 .join(', ') ||
               'Belum ada informasi lokasi yang tersedia untuk akun admin ini.'
             }
-            aside={
-              <DashboardAsideCard title="Akun Admin">
-                <p className="font-medium text-foreground">{user?.email}</p>
-                <div className="mt-4 rounded-2xl border border-white/70 bg-white/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Booking lokasi
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">
-                    {overview?.stats.totalBookings ?? 0}
-                  </p>
-                </div>
-              </DashboardAsideCard>
-            }
           />
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

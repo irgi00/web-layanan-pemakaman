@@ -10,7 +10,7 @@ export function getCemeteryImageUrl(imageUrl?: string | null) {
   return trimmedImageUrl;
 }
 
-export function isSupportedCemeteryImageUrl(imageUrl?: string | null) {
+export function isSupportedImageUrl(imageUrl?: string | null) {
   const trimmedImageUrl = imageUrl?.trim();
 
   if (!trimmedImageUrl) {
@@ -18,4 +18,8 @@ export function isSupportedCemeteryImageUrl(imageUrl?: string | null) {
   }
 
   return /^https?:\/\//i.test(trimmedImageUrl) || trimmedImageUrl.startsWith('/');
+}
+
+export function isSupportedCemeteryImageUrl(imageUrl?: string | null) {
+  return isSupportedImageUrl(imageUrl);
 }

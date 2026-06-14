@@ -18,8 +18,6 @@ export async function GET() {
         city: true,
         province: true,
         imageUrl: true,
-        totalPlots: true,
-        availablePlots: true,
         admins: {
           where: { role: 'CEMETERY_ADMIN' },
           select: {
@@ -48,17 +46,15 @@ export async function GET() {
     return NextResponse.json(
       {
         cemeteries: cemeteries.map((cemetery) => ({
+          totalPlots: cemetery.plots.length,
+          availablePlots: cemetery.plots.filter((plot) => plot.status === 'available').length,
+          totalBookings: cemetery.bookings.length,
           id: cemetery.id,
           name: cemetery.name,
           location: cemetery.location,
           city: cemetery.city,
           province: cemetery.province,
           imageUrl: cemetery.imageUrl,
-          totalPlots: cemetery.plots.length || cemetery.totalPlots,
-          availablePlots:
-            cemetery.plots.filter((plot) => plot.status === 'available').length ||
-            cemetery.availablePlots,
-          totalBookings: cemetery.bookings.length,
           totalRevenue: cemetery.bookings.reduce(
             (sum, booking) => sum + booking.totalPrice,
             0
