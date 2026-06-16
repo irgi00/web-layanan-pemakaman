@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getSql } from '@/lib/neon';
 
 export async function GET(
   _request: NextRequest,
@@ -7,54 +7,58 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const sql = getSql();
 
-    const cemetery = await prisma.cemetery.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        latitude: true,
-        longitude: true,
-        description: true,
-        totalPlots: true,
-        availablePlots: true,
-        pricePerPlot: true,
-        imageUrl: true,
-        contactEmail: true,
-        contactPhone: true,
-        status: true,
-        plots: {
-          orderBy: [
-            { section: 'asc' },
-            { row: 'asc' },
-            { plotNumber: 'asc' },
-          ],
-          select: {
-            id: true,
-            plotNumber: true,
-            section: true,
-            row: true,
-            latitude: true,
-            longitude: true,
-            status: true,
-            description: true,
-          },
-        },
-        services: {
-          where: { isActive: true },
-          orderBy: [{ price: 'asc' }, { name: 'asc' }],
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            price: true,
-            category: true,
-            isActive: true,
-          },
-        },
-      },
-    });
+    const [cemeteries, plots, services] = await Promise.all([
+      sql`
+        SELECT
+          id,
+          name,
+          location,
+          latitude,
+          longitude,
+          description,
+          "totalPlots",
+          "availablePlots",
+          "pricePerPlot",
+          "imageUrl",
+          "contactEmail",
+          "contactPhone",
+          status
+        FROM "Cemetery"
+        WHERE id = ${id}
+        LIMIT 1
+      `,
+      sql`
+        SELECT
+          id,
+          "plotNumber",
+          section,
+          row,
+          latitude,
+          longitude,
+          status,
+          description
+        FROM "Plot"
+        WHERE "cemeteryId" = ${id}
+          AND status = 'available'
+        ORDER BY section ASC, row ASC, "plotNumber" ASC
+      `,
+      sql`
+        SELECT
+          id,
+          name,
+          description,
+          price,
+          category,
+          "isActive"
+        FROM "Service"
+        WHERE "cemeteryId" = ${id}
+          AND "isActive" = true
+        ORDER BY price ASC, name ASC
+      `,
+    ]);
+    const cemetery = cemeteries[0];
 
     if (!cemetery) {
       return NextResponse.json(
@@ -63,9 +67,7 @@ export async function GET(
       );
     }
 
-    const plots = cemetery.plots
-      .filter((plot) => plot.status === 'available')
-      .map((plot) => ({
+    const availablePlots = plots.map((plot) => ({
         ...plot,
         price: cemetery.pricePerPlot,
       }));
@@ -73,8 +75,8 @@ export async function GET(
     return NextResponse.json(
       {
         ...cemetery,
-        plots,
-        services: cemetery.services,
+        plots: availablePlots,
+        services,
       },
       { status: 200 }
     );

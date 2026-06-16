@@ -235,7 +235,7 @@ export default function CemeteriesMapPage() {
     }
 
     return (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="cemeteries-map grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
@@ -287,18 +287,24 @@ export default function CemeteriesMapPage() {
                     lat: selectedCemetery.latitude,
                     lng: selectedCemetery.longitude,
                   }}
+                  options={{
+                    maxWidth: 320,
+                    pixelOffset: new window.google.maps.Size(0, -10),
+                  }}
                   onCloseClick={() => setSelectedCemetery(null)}
                 >
-                  <div className="max-w-[240px] space-y-3 pr-2">
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{selectedCemetery.name}</h3>
-                      <p className="mt-1 text-sm text-slate-600">
+                  <div className="w-[min(18rem,calc(100vw-4.5rem))] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:w-72">
+                    <div className="pr-8">
+                      <h3 className="text-base font-semibold leading-snug text-slate-900">
+                        {selectedCemetery.name}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
                         {selectedCemetery.description || 'Tidak ada deskripsi singkat.'}
                       </p>
                     </div>
                     <Button
                       size="sm"
-                      className="w-full"
+                      className="mt-4 min-h-10 w-full rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:ring-emerald-500"
                       onClick={() => router.push(`/cemeteries/${selectedCemetery.id}`)}
                     >
                       Lihat Detail
@@ -356,12 +362,12 @@ export default function CemeteriesMapPage() {
           </Card>
 
           <Card className="border-border bg-card p-5">
-            <h2 className="font-semibold text-foreground">Panduan Tampilan</h2>
+            <h2 className="font-semibold text-foreground">Panduan Peta</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>Marker diambil dari API `/api/cemeteries` agar data tetap konsisten.</li>
-              <li>Satu `InfoWindow` aktif pada satu waktu agar peta tidak terasa penuh.</li>
-              <li>Lokasi user hanya diminta saat tombol ditekan, jadi lebih ramah privasi.</li>
-              <li>Auto-center terjadi setelah lokasi user didapat atau saat marker pertama dimuat.</li>
+              <li>Klik marker TPU untuk melihat informasi singkat lokasi.</li>
+              <li>Gunakan tombol “Lihat Detail” untuk membuka halaman pemakaman.</li>
+              <li>Tekan “Lokasi saya” untuk menampilkan posisi Anda di peta.</li>
+              <li>Gunakan “Kembali ke daftar” untuk melihat TPU dalam bentuk daftar.</li>
             </ul>
           </Card>
 
@@ -397,6 +403,33 @@ export default function CemeteriesMapPage() {
 
         {renderContent()}
       </main>
+
+      <style jsx global>{`
+        .cemeteries-map .gm-style .gm-style-iw-c {
+          padding: 0 !important;
+          border-radius: 1rem !important;
+          background: #ffffff !important;
+          box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18) !important;
+        }
+
+        .cemeteries-map .gm-style .gm-style-iw-d {
+          overflow: hidden !important;
+          max-width: 20rem !important;
+        }
+
+        .cemeteries-map .gm-style .gm-style-iw-tc::after {
+          background: #ffffff !important;
+          box-shadow: -4px 4px 16px rgba(15, 23, 42, 0.12) !important;
+        }
+
+        .cemeteries-map .gm-style button.gm-ui-hover-effect {
+          top: 0.5rem !important;
+          right: 0.5rem !important;
+          opacity: 1 !important;
+          border-radius: 9999px !important;
+          background: #ffffff !important;
+        }
+      `}</style>
     </div>
   );
 }

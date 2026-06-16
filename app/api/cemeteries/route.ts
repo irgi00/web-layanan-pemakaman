@@ -1,52 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getSql } from '@/lib/neon';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const pageParam = Number.parseInt(searchParams.get('page') || '1', 10);
+    const limitParam = Number.parseInt(searchParams.get('limit') || '10', 10);
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 10;
     const skip = (page - 1) * limit;
 
-    const country = searchParams.get('country') || undefined;
-    const island = searchParams.get('island') || undefined;
-    const province = searchParams.get('province') || undefined;
-    const city = searchParams.get('city') || undefined;
+    const country = searchParams.get('country')?.trim() || null;
+    const island = searchParams.get('island')?.trim() || null;
+    const province = searchParams.get('province')?.trim() || null;
+    const city = searchParams.get('city')?.trim() || null;
+    const sql = getSql();
 
-    const where: any = { status: 'active' };
-    if (country) where.country = country;
-    if (island) where.island = island;
-    if (province) where.province = province;
-    if (city) where.city = city;
-
-    const [cemeteries, total] = await Promise.all([
-      prisma.cemetery.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          location: true,
-          address: true,
-          country: true,
-          island: true,
-          province: true,
-          city: true,
-          latitude: true,
-          longitude: true,
-          description: true,
-          totalPlots: true,
-          availablePlots: true,
-          pricePerPlot: true,
-          imageUrl: true,
-          contactEmail: true,
-          contactPhone: true,
-        },
-      }),
-      prisma.cemetery.count({ where }),
+    const [cemeteries, totalRows] = await Promise.all([
+      sql`
+        SELECT
+          id,
+          name,
+          location,
+          address,
+          country,
+          island,
+          province,
+          city,
+          latitude,
+          longitude,
+          description,
+          "totalPlots",
+          "availablePlots",
+          "pricePerPlot",
+          "imageUrl",
+          "contactEmail",
+          "contactPhone"
+        FROM "Cemetery"
+        WHERE status = 'active'
+          AND (${country}::text IS NULL OR country = ${country})
+          AND (${island}::text IS NULL OR island = ${island})
+          AND (${province}::text IS NULL OR province = ${province})
+          AND (${city}::text IS NULL OR city = ${city})
+        ORDER BY "createdAt" DESC
+        LIMIT ${limit}
+        OFFSET ${skip}
+      `,
+      sql`
+        SELECT COUNT(*)::int AS total
+        FROM "Cemetery"
+        WHERE status = 'active'
+          AND (${country}::text IS NULL OR country = ${country})
+          AND (${island}::text IS NULL OR island = ${island})
+          AND (${province}::text IS NULL OR province = ${province})
+          AND (${city}::text IS NULL OR city = ${city})
+      `,
     ]);
+    const total = totalRows[0]?.total ?? 0;
 
     return NextResponse.json(
       {
