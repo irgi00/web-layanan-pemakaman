@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
 
     const requestedCemeteryId = request.nextUrl.searchParams.get('cemeteryId');
     const requestedStatus = request.nextUrl.searchParams.get('status');
+    const requestedSort = request.nextUrl.searchParams.get('sort');
     const scopedCemeteryId = getScopedCemeteryId(admin, requestedCemeteryId);
+    const sortDirection = requestedSort === 'newest' ? 'newest' : 'oldest';
     const paymentStatusFilter: PaymentStatus | null =
       requestedStatus &&
       ['PENDING', 'PENDING_VERIFICATION', 'COMPLETED', 'FAILED', 'REJECTED', 'REFUNDED'].includes(
@@ -75,18 +77,35 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
+    });
+
+    const sortedPayments = [...payments].sort((left, right) => {
+      const leftSubmittedAt =
+        left.paymentSubmittedAt?.getTime() ?? left.createdAt.getTime();
+      const rightSubmittedAt =
+        right.paymentSubmittedAt?.getTime() ?? right.createdAt.getTime();
+
+      if (leftSubmittedAt !== rightSubmittedAt) {
+        return sortDirection === 'newest'
+          ? rightSubmittedAt - leftSubmittedAt
+          : leftSubmittedAt - rightSubmittedAt;
+      }
+
+      return sortDirection === 'newest'
+        ? right.createdAt.getTime() - left.createdAt.getTime()
+        : left.createdAt.getTime() - right.createdAt.getTime();
     });
 
     return NextResponse.json(
       {
-        payments,
+        payments: sortedPayments,
         stats: {
-          total: payments.length,
-          pendingVerification: payments.filter((payment) => payment.status === 'PENDING_VERIFICATION')
-            .length,
-          completed: payments.filter((payment) => payment.status === 'COMPLETED').length,
-          rejected: payments.filter((payment) => payment.status === 'REJECTED').length,
+          total: sortedPayments.length,
+          pendingVerification: sortedPayments.filter(
+            (payment) => payment.status === 'PENDING_VERIFICATION'
+          ).length,
+          completed: sortedPayments.filter((payment) => payment.status === 'COMPLETED').length,
+          rejected: sortedPayments.filter((payment) => payment.status === 'REJECTED').length,
         },
       },
       { status: 200 }

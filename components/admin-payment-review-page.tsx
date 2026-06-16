@@ -40,6 +40,7 @@ import {
 import { formatRupiah } from '@/lib/utils';
 
 type AdminRole = 'CEMETERY_ADMIN' | 'SUPER_ADMIN';
+type PaymentSortOrder = 'oldest' | 'newest';
 
 interface PaymentItem {
   id: string;
@@ -47,6 +48,7 @@ interface PaymentItem {
   status: string;
   paymentMethod: string | null;
   proofUrl: string | null;
+  paymentSubmittedAt: string | null;
   rejectionReason: string | null;
   verifiedAt: string | null;
   updatedAt: string;
@@ -104,6 +106,7 @@ export function AdminPaymentReviewPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
+  const [sortOrder, setSortOrder] = useState<PaymentSortOrder>('oldest');
   const [approveTarget, setApproveTarget] = useState<PaymentItem | null>(null);
   const [rejectTarget, setRejectTarget] = useState<PaymentItem | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -112,7 +115,8 @@ export function AdminPaymentReviewPage({
   const loadPayments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/payments', {
+      const searchParams = new URLSearchParams({ sort: sortOrder });
+      const response = await fetch(`/api/admin/payments?${searchParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: { Accept: 'application/json' },
@@ -137,7 +141,7 @@ export function AdminPaymentReviewPage({
 
   useEffect(() => {
     loadPayments();
-  }, []);
+  }, [sortOrder]);
 
   const filteredPayments =
     activeFilter === 'ALL'
@@ -229,6 +233,11 @@ export function AdminPaymentReviewPage({
     { label: 'Ditolak', value: 'REJECTED' },
   ];
 
+  const sortLabel =
+    sortOrder === 'newest'
+      ? 'Pembayaran terbaru tampil lebih dulu.'
+      : 'Pembayaran terlama tampil lebih dulu.';
+
   return (
     <PortalShell
       role={role}
@@ -281,20 +290,38 @@ export function AdminPaymentReviewPage({
 
         <DashboardSection
           title="Daftar Pembayaran"
-          description="Periksa bukti pembayaran, status booking, dan lakukan aksi verifikasi sesuai kebutuhan."
+          description={`Periksa bukti pembayaran, status booking, dan lakukan aksi verifikasi sesuai kebutuhan. ${sortLabel}`}
+          actionPlacement="below"
           action={
-            <div className="flex flex-wrap gap-2">
-              {filterOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  type="button"
-                  size="sm"
-                  variant={activeFilter === option.value ? 'default' : 'outline'}
-                  onClick={() => setActiveFilter(option.value)}
+            <div className="space-y-3">
+              <label className="flex w-full max-w-xs flex-col gap-2 text-sm text-muted-foreground">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                  Urutkan
+                </span>
+                <select
+                  value={sortOrder}
+                  onChange={(event) => setSortOrder(event.target.value as PaymentSortOrder)}
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-primary"
                 >
-                  {option.label}
-                </Button>
-              ))}
+                  <option value="oldest">Terlama</option>
+                  <option value="newest">Terbaru</option>
+                </select>
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                {filterOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    size="sm"
+                    variant={activeFilter === option.value ? 'default' : 'outline'}
+                    className="rounded-full"
+                    onClick={() => setActiveFilter(option.value)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           }
         >
@@ -328,6 +355,7 @@ export function AdminPaymentReviewPage({
                           Plot: {payment.booking.plot.section} - {payment.booking.plot.plotNumber} -{' '}
                           {payment.booking.plot.row}
                         </p>
+                        <p>Dikirim pada: {formatDate(payment.paymentSubmittedAt ?? payment.createdAt)}</p>
                         <p>Dibuat: {formatDate(payment.booking.createdAt)}</p>
                         <p>Metode: {payment.paymentMethod || 'Belum diisi'}</p>
                         <p>ID booking: {payment.booking.id}</p>

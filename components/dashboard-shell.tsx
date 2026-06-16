@@ -96,12 +96,14 @@ export function DashboardSection({
   title,
   description,
   action,
+  actionPlacement = 'side',
   children,
   className,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  actionPlacement?: 'side' | 'below';
   children: ReactNode;
   className?: string;
 }) {
@@ -113,13 +115,23 @@ export function DashboardSection({
       )}
     >
       <CardHeader className="border-b border-border/60 bg-white/70 py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
-            {description ? <CardDescription>{description}</CardDescription> : null}
+        {actionPlacement === 'below' ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
+              {description ? <CardDescription>{description}</CardDescription> : null}
+            </div>
+            {action}
           </div>
-          {action}
-        </div>
+        ) : (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
+              {description ? <CardDescription>{description}</CardDescription> : null}
+            </div>
+            {action}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="px-4 py-5 sm:px-6">{children}</CardContent>
     </Card>

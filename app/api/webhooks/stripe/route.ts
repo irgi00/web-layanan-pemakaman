@@ -56,6 +56,7 @@ async function handlePaymentSucceeded(paymentIntent: any) {
       where: { id: payment.id },
       data: {
         status: 'PENDING_VERIFICATION',
+        paymentSubmittedAt: new Date(),
         rejectionReason: null,
       },
     });

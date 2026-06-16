@@ -166,6 +166,7 @@ export async function POST(
         status: 'PENDING_VERIFICATION',
         paymentMethod: body.paymentMethod?.trim() || payment.paymentMethod || 'MANUAL_TRANSFER',
         proofUrl: proofUrl ?? payment.proofUrl,
+        paymentSubmittedAt: new Date(),
         rejectionReason: null,
         verifiedAt: null,
         verifiedById: null,

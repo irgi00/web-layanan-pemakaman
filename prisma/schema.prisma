@@ -224,6 +224,7 @@ model Payment {
   paymentMethod     String?
   proofUrl          String?
   rejectionReason   String?
+  paymentSubmittedAt DateTime?
   verifiedAt        DateTime?
   verifiedById      String?           @db.Uuid
   verifiedBy        User?             @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
@@ -232,6 +233,7 @@ model Payment {
   updatedAt         DateTime          @updatedAt
   
   @@index([bookingId])
+  @@index([paymentSubmittedAt])
   @@index([status])
   @@index([verifiedById])
 }
